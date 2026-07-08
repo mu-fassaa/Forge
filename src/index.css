@@ -1,0 +1,43 @@
+@import "tailwindcss";
+
+/* Base layout config */
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: #090d16; /* Sleek dark-slate background */
+  color: #f3f4f6;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* React Flow Visual Customizations */
+.react-flow {
+  --xy-edge-stroke-default: #374151;
+  --xy-edge-stroke-selected: #a855f7;
+  --xy-node-border-default: #1f2937;
+  --xy-node-border-selected: #c084fc;
+  background-color: #0b0f19 !important;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #090d16;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1f2937;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #374151;
+}

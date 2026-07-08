@@ -5,7 +5,7 @@ import { LucideIcon } from '../LucideIcon';
 type StepStatus = 'idle' | 'loading' | 'success' | 'failed';
 
 export const PublishModal: React.FC = () => {
-  const { activeModal, setActiveModal, addNotification, validationErrors } = useWorkspace();
+  const { activeModal, setActiveModal, addNotification, validationErrors, activeEditor } = useWorkspace();
 
   const [step1, setStep1] = useState<StepStatus>('idle');
   const [step2, setStep2] = useState<StepStatus>('idle');
@@ -192,9 +192,11 @@ export const PublishModal: React.FC = () => {
                 <div className="w-10 h-10 rounded-full bg-emerald-500/15 flex items-center justify-center mb-2.5 text-emerald-400 shadow shadow-emerald-500/10">
                   <LucideIcon name="Trophy" size={18} />
                 </div>
-                <h5 className="text-xs font-extrabold text-emerald-400 uppercase tracking-widest">Build Completed</h5>
+                <h5 className="text-xs font-extrabold text-emerald-400 uppercase tracking-widest">
+                  {activeEditor?.publishInfo?.title || 'Build Completed'}
+                </h5>
                 <p className="text-[10px] text-gray-500 mt-1 max-w-xs leading-relaxed">
-                  Project compiled successfully. Dialogue tree schemas are verified and ready to be imported by Godot's parser.
+                  {activeEditor?.publishInfo?.description || 'Project compiled successfully. Active schemas are compiled and ready for runtime import.'}
                 </p>
               </div>
             )}

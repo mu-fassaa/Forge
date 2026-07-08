@@ -17,6 +17,7 @@ import { nodeRegistry } from '../../registry/nodeRegistry';
 import { InspectorPanel } from './components/InspectorPanel';
 import { HistoryPanel } from '../../components/workspace/HistoryPanel';
 import { type NodePort } from './types/nodes';
+import { DialoguePreviewSimulator } from './components/DialoguePreviewSimulator';
 
 // Side-effect import: mendaftarkan semua node dialogue ke registry global
 import './components/nodes/definitions';
@@ -60,7 +61,7 @@ const DialogueEditorContent: React.FC = () => {
 
   // ── Muat data simpanan pertama kali (On Mount) ──────────────
   useEffect(() => {
-    const savedData = loadProject();
+    const savedData = loadProject('dialogue');
     if (savedData) {
       setNodes(savedData.nodes || []);
       setEdges(savedData.edges || []);
@@ -72,7 +73,18 @@ const DialogueEditorContent: React.FC = () => {
 
   // ── Sinkronkan Active Editor Registry ──────────────────────
   useEffect(() => {
-    setActiveEditor({ nodes, edges, setNodes, setEdges });
+    setActiveEditor({
+      id: 'dialogue',
+      nodes,
+      edges,
+      setNodes,
+      setEdges,
+      previewComponent: DialoguePreviewSimulator,
+      publishInfo: {
+        title: 'Dialogue Tree Compiled',
+        description: "Dialogue tree schemas are verified and ready to be imported by Godot's parser.",
+      },
+    });
     return () => {
       setActiveEditor(null);
     };

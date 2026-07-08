@@ -9,10 +9,23 @@ import type {
 } from '../types/workspace';
 
 export interface EditorRegistry {
+  id: string; // Tipe unik editor (misal: 'dialogue')
   nodes: any[];
   edges: any[];
   setNodes: (nodes: any) => void;
   setEdges: (edges: any) => void;
+  publishInfo?: {
+    title: string;
+    description: string;
+  };
+  previewComponent?: React.ComponentType<{
+    nodes: any[];
+    edges: any[];
+    variables: Record<string, string>;
+    setVariables: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+    addLog: (entry: { type: string; text: string }) => void;
+    onClose: () => void;
+  }>;
 }
 
 interface WorkspaceContextProps {
@@ -28,8 +41,8 @@ interface WorkspaceContextProps {
   setActiveEditor: (editor: EditorRegistry | null) => void;
   
   // Save/Load Systems
-  saveProject: (nodes: any[], edges: any[]) => void;
-  loadProject: () => { nodes: any[]; edges: any[] } | null;
+  saveProject: (nodes: any[], edges: any[], editorId?: string) => void;
+  loadProject: (editorId?: string) => { nodes: any[]; edges: any[] } | null;
   
   // History System (Change Logs & Stack)
   historyLogs: HistoryAction[];
@@ -106,6 +119,9 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   // ── Active Overlay Modals ──
   const [activeModal, setActiveModal] = useState<'settings' | 'publish' | 'profile' | 'about' | 'preview' | null>(null);
+
+  // ── Active Editor Registry State ──
+  const [activeEditor, setActiveEditor] = useState<EditorRegistry | null>(null);
 
   // ── Notification state ──
   const [notifications, setNotifications] = useState<ToastNotification[]>([]);
@@ -222,33 +238,58 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   }, [futureStack, addNotification]);
 
   // Project Serialization & Local Saving
-  const saveProject = useCallback((nodes: any[], edges: any[]) => {
+  const saveProject = useCallback((nodes: any[], edges: any[], editorId?: string) => {
     const updatedMetadata: ProjectMetadata = {
       ...metadata,
       lastSavedAt: new Date().toISOString(),
     };
 
+    // Baca data editor yang sudah ada untuk di-merge agar tidak menimpa data plugin lain
+    const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
+    let existingEditorData: Record<string, any> = {};
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed.editorData) {
+          existingEditorData = parsed.editorData;
+        }
+      } catch (e) {
+        console.error('Failed to parse existing project file for merge:', e);
+      }
+    }
+
+    const targetId = editorId || activeEditor?.id || 'dialogue';
+    const updatedEditorData = {
+      ...existingEditorData,
+      [targetId]: { nodes, edges },
+    };
+
     const projectFile = {
       metadata: updatedMetadata,
       settings,
-      editorData: {
-        dialogue: { nodes, edges },
-      },
+      editorData: updatedEditorData,
     };
 
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(projectFile));
     setMetadata(updatedMetadata);
     setIsDirty(false);
-    addNotification('success', 'Project saved successfully to local workspace!');
-  }, [metadata, settings, addNotification]);
+    addNotification('success', `Project successfully saved target: "${targetId}"`);
+  }, [metadata, settings, activeEditor, addNotification]);
 
   // Project Deserialization
-  const loadProject = useCallback(() => {
+  const loadProject = useCallback((editorId?: string) => {
     const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
     if (!saved) return null;
     try {
       const parsed = JSON.parse(saved);
-      if (parsed.editorData?.dialogue) {
+      const targetId = editorId || activeEditor?.id || 'dialogue';
+
+      // 1. Coba baca key baru dinamis
+      if (parsed.editorData?.[targetId]) {
+        return parsed.editorData[targetId];
+      }
+      // 2. Fallback backward compatibility untuk data lama
+      if (targetId === 'dialogue' && parsed.editorData?.dialogue) {
         return parsed.editorData.dialogue;
       }
     } catch (e) {
@@ -256,10 +297,8 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       addNotification('error', 'Error loading project file data.');
     }
     return null;
-  }, [addNotification]);
+  }, [activeEditor, addNotification]);
 
-  // Registry state for active editor
-  const [activeEditor, setActiveEditor] = useState<EditorRegistry | null>(null);
 
   // Autosave execution
   useEffect(() => {

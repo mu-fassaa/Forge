@@ -4,6 +4,7 @@ import { type EditorType } from '../types';
 import { LucideIcon } from '../components/LucideIcon';
 import { useWorkspace } from '../context/WorkspaceContext';
 import { UserMenu } from '../components/workspace/UserMenu';
+import { StatusBar } from '../components/workspace/StatusBar';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -28,27 +29,39 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   } = useWorkspace();
 
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-[#070814] text-[#f3f4f6]">
+    <div className="flex h-screen w-screen overflow-hidden bg-[#07122A] text-[#F3F4F6] font-sans antialiased">
       {/* Sidebar - Panel Kiri */}
-      <aside className="w-64 border-r border-[#14152a] bg-[#0b0c1e] flex flex-col h-full select-none">
+      <aside className="w-64 border-r border-[#1a2d54] bg-[#0c1833] flex flex-col h-full select-none shrink-0">
         
         {/* Logo & Versi */}
-        <div className="p-5 border-b border-[#14152a] flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-gradient-to-tr from-pink-500 via-purple-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-pink-500/20">
-            <span className="font-black text-white text-base">F</span>
+        <div className="p-5 border-b border-[#1a2d54] flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-[#122247] border border-[#00A3FF] flex items-center justify-center shadow-md">
+            <span className="font-extrabold text-[#00A3FF] text-sm">F</span>
           </div>
           <div>
-            <h1 className="font-extrabold text-sm leading-tight text-white tracking-wide uppercase">Forge</h1>
-            <p className="text-[9px] text-gray-500 tracking-wider font-bold">V{metadata.version} EARLY ACCESS</p>
+            <h1 className="font-extrabold text-xs leading-tight text-[#F3F4F6] tracking-widest uppercase">Forge</h1>
+            <p className="text-[9px] text-[#8E9BB4] tracking-wider font-bold font-mono">V{metadata.version} ALPHA</p>
           </div>
         </div>
 
-        {/* Tombol New Module */}
+        {/* Tombol New Graph */}
         <div className="px-4 py-4">
-          <button className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg bg-[#ec4899] hover:bg-[#db2777] text-white font-bold text-xs uppercase tracking-wider transition-all duration-200 shadow-[0_0_15px_rgba(236,72,153,0.15)] cursor-pointer">
-            <LucideIcon name="Plus" size={14} className="stroke-[3]" />
-            New Module
+          <button
+            onClick={() => {
+              if (activeTab === 'dialogue') {
+                // If in Dialogue, trigger graph clearing / reload
+                addNotification('info', 'Please click "Clear" on the toolbar to reset the graph.');
+              } else {
+                // Route to editor
+                setActiveTab('dialogue');
+              }
+            }}
+            className="w-full flex items-center justify-center gap-2 py-2 rounded-lg bg-[#00A3FF] hover:bg-[#008be6] text-white font-bold text-xs uppercase tracking-wider transition-all duration-150 cursor-pointer shadow-sm"
+          >
+            <LucideIcon name="Plus" size={13} className="stroke-[3]" />
+            New Graph
           </button>
         </div>
 
@@ -56,25 +69,25 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         <nav className="flex-1 overflow-y-auto px-4 py-2 space-y-5">
           {/* Menu Utama */}
           <div>
-            <span className="px-3 text-[9px] uppercase font-extrabold tracking-widest text-gray-500 block mb-2">
-              Menu Utama
+            <span className="px-3 text-[9px] uppercase font-bold tracking-widest text-[#8E9BB4]/60 block mb-2 font-mono">
+              Main Menu
             </span>
             <button
               onClick={() => setActiveTab('dashboard')}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all duration-200 cursor-pointer ${
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-bold transition-all duration-150 cursor-pointer ${
                 activeTab === 'dashboard'
-                  ? 'bg-purple-950/20 text-purple-300 border border-purple-500/10 shadow-[inset_0_0_12px_rgba(236,72,153,0.05)]'
-                  : 'text-gray-400 hover:bg-[#14152a]/50 hover:text-gray-200 border border-transparent'
+                  ? 'bg-[#122247] text-[#00A3FF] border border-[#00A3FF]/20'
+                  : 'text-[#8E9BB4] hover:bg-[#122247]/40 hover:text-white border border-transparent'
               }`}
             >
-              <LucideIcon name="LayoutDashboard" size={16} />
+              <LucideIcon name="LayoutDashboard" size={15} />
               Dashboard
             </button>
           </div>
 
           {/* Editors & Databases */}
           <div>
-            <span className="px-3 text-[9px] uppercase font-extrabold tracking-widest text-gray-500 block mb-2">
+            <span className="px-3 text-[9px] uppercase font-bold tracking-widest text-[#8E9BB4]/60 block mb-2 font-mono">
               Editors & Databases
             </span>
             <div className="space-y-1">
@@ -87,20 +100,20 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                     key={tool.id}
                     onClick={() => !isComingSoon && setActiveTab(tool.id)}
                     disabled={isComingSoon}
-                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-semibold transition-all duration-200 border cursor-pointer ${
+                    className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-bold transition-all duration-150 border cursor-pointer ${
                       isActive
-                        ? 'bg-[#ec4899]/10 text-[#e879f9] border-[#ec4899]/20'
+                        ? 'bg-[#00A3FF]/10 text-[#00A3FF] border-[#00A3FF]/25'
                         : isComingSoon
-                        ? 'opacity-40 text-gray-500 border-transparent cursor-not-allowed'
-                        : 'text-gray-400 hover:bg-[#14152a]/50 hover:text-gray-200 border-transparent hover:border-gray-800/20'
+                        ? 'opacity-30 text-gray-500 border-transparent cursor-not-allowed'
+                        : 'text-[#8E9BB4] hover:bg-[#122247]/40 hover:text-white border-transparent'
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <LucideIcon name={tool.icon} size={16} />
+                      <LucideIcon name={tool.icon} size={15} />
                       <span>{tool.sidebarName || tool.name}</span>
                     </div>
                     {isComingSoon && (
-                      <span className="text-[8px] uppercase tracking-wider font-extrabold bg-[#14152a] px-1.5 py-0.5 rounded text-gray-500">
+                      <span className="text-[7px] uppercase tracking-wider font-extrabold bg-[#122247] px-1.5 py-0.5 rounded text-gray-500 font-mono">
                         Soon
                       </span>
                     )}
@@ -115,9 +128,9 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
             <div className="space-y-1">
               <button
                 disabled
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold text-gray-500 opacity-40 border border-transparent cursor-not-allowed"
+                className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-bold text-gray-600 opacity-30 border border-transparent cursor-not-allowed"
               >
-                <LucideIcon name="Settings" size={16} />
+                <LucideIcon name="Settings" size={15} />
                 Project Settings
               </button>
             </div>
@@ -125,39 +138,48 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         </nav>
 
         {/* Footer Sidebar */}
-        <div className="p-4 border-t border-[#14152a] bg-[#090a18] text-[10px] text-gray-500 flex flex-col gap-2">
+        <div className="p-4 border-t border-[#1a2d54] bg-[#07122A] text-[10px] text-[#8E9BB4] flex flex-col gap-2">
           <button
             onClick={() => setActiveTab('docs')}
-            className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold transition-all duration-200 cursor-pointer text-left ${
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-150 cursor-pointer text-left ${
               activeTab === 'docs'
-                ? 'bg-[#ec4899]/10 text-[#e879f9] border border-[#ec4899]/20'
-                : 'text-gray-400 hover:text-white border border-transparent'
+                ? 'bg-[#00A3FF]/10 text-[#00A3FF] border border-[#00A3FF]/20'
+                : 'text-[#8E9BB4] hover:text-white border border-transparent'
             }`}
           >
             <LucideIcon name="FileText" size={12} />
             Documentation
           </button>
-          <div className="flex items-center justify-between pt-1 border-t border-[#14152a]/50 text-[9px]">
+          <div className="flex items-center justify-between pt-1 border-t border-[#1a2d54]/50 text-[9px] font-mono">
             <span>v{metadata.version}</span>
-            <a href="#" className="hover:text-gray-300">Support</a>
+            <a href="#" className="hover:text-white">Support</a>
           </div>
         </div>
       </aside>
 
       {/* Panel Utama (Kanan) */}
-      <div className="flex-1 flex flex-col h-full overflow-hidden">
+      <div className="flex-1 flex flex-col h-full overflow-hidden bg-[#07122A]">
         
         {/* Header Atas */}
-        <header className="h-14 border-b border-[#14152a] bg-[#0b0c1e] px-6 flex items-center justify-between select-none">
+        <header className="h-14 border-b border-[#1a2d54] bg-[#0c1833] px-6 flex items-center justify-between select-none shrink-0">
           {/* Left Title + Unsaved Changes dot */}
-          <div className="flex items-center gap-4">
-            <span className="font-bold text-xs text-gray-300 uppercase tracking-widest">
-              {metadata.name}
-            </span>
+          <div className="flex items-center gap-4 select-none font-mono text-[11px] font-bold">
+            <div className="flex items-center gap-1.5 text-[#8E9BB4]/65">
+              <span>PROJECT:</span>
+              <span className="text-white uppercase">{metadata.name}</span>
+            </div>
+            <span className="text-[#8E9BB4]/40">/</span>
+            <div className="flex items-center gap-1.5 text-[#8E9BB4]/65">
+              <span>WORKSPACE:</span>
+              <span className="text-[#00A3FF] uppercase">
+                {activeTab === 'dashboard' ? 'LAUNCHER' : activeTab.toUpperCase()}
+              </span>
+            </div>
+
             {isDirty && (
-              <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-pink-500/10 border border-pink-500/20">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#ec4899] animate-pulse"></span>
-                <span className="text-[8px] uppercase tracking-wider font-extrabold text-[#e879f9]">Unsaved Changes</span>
+              <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/20">
+                <span className="w-1.2 h-1.2 rounded-full bg-amber-500 animate-pulse"></span>
+                <span className="text-[8px] uppercase tracking-wider font-extrabold text-amber-500">Unsaved</span>
               </div>
             )}
           </div>
@@ -166,30 +188,30 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           <div className="flex h-full items-center gap-6">
             <button
               onClick={() => setLayoutTab('explorer')}
-              className={`h-full border-b-2 px-1 transition-all cursor-pointer ${
+              className={`h-full border-b-2 px-1 transition-all cursor-pointer flex items-center ${
                 layoutTab === 'explorer'
-                  ? 'border-[#ec4899] text-[#e879f9] text-xs font-bold'
-                  : 'border-transparent text-gray-400 hover:text-gray-200 text-xs font-semibold'
+                  ? 'border-[#00A3FF] text-[#00A3FF] text-xs font-bold'
+                  : 'border-transparent text-[#8E9BB4] hover:text-[#F3F4F6] text-xs font-semibold'
               }`}
             >
               Explorer
             </button>
             <button
               onClick={() => setLayoutTab('history')}
-              className={`h-full border-b-2 px-1 transition-all cursor-pointer ${
+              className={`h-full border-b-2 px-1 transition-all cursor-pointer flex items-center ${
                 layoutTab === 'history'
-                  ? 'border-[#ec4899] text-[#e879f9] text-xs font-bold'
-                  : 'border-transparent text-gray-400 hover:text-gray-200 text-xs font-semibold'
+                  ? 'border-[#00A3FF] text-[#00A3FF] text-xs font-bold'
+                  : 'border-transparent text-[#8E9BB4] hover:text-[#F3F4F6] text-xs font-semibold'
               }`}
             >
               History
             </button>
             <button
               onClick={() => setLayoutTab('collaborators')}
-              className={`h-full border-b-2 px-1 transition-all cursor-pointer ${
+              className={`h-full border-b-2 px-1 transition-all cursor-pointer flex items-center ${
                 layoutTab === 'collaborators'
-                  ? 'border-[#ec4899] text-[#e879f9] text-xs font-bold'
-                  : 'border-transparent text-gray-400 hover:text-gray-200 text-xs font-semibold'
+                  ? 'border-[#00A3FF] text-[#00A3FF] text-xs font-bold'
+                  : 'border-transparent text-[#8E9BB4] hover:text-[#F3F4F6] text-xs font-semibold'
               }`}
             >
               Collaborators
@@ -199,18 +221,18 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           {/* Tombol Aksi Kanan */}
           <div className="flex items-center gap-4 relative">
             {/* Notifikasi & Cloud Status */}
-            <div className="flex items-center gap-3 text-gray-400">
+            <div className="flex items-center gap-3 text-[#8E9BB4]">
               <button className="hover:text-white transition-colors cursor-pointer relative">
-                <LucideIcon name="Bell" size={16} />
-                <span className="absolute top-0 right-0 w-1.5 h-1.5 bg-[#ec4899] rounded-full"></span>
+                <LucideIcon name="Bell" size={15} />
+                <span className="absolute top-0 right-0 w-1 h-1 bg-[#00A3FF] rounded-full"></span>
               </button>
               <button className="hover:text-white transition-colors cursor-pointer">
-                <LucideIcon name="Cloud" size={16} />
+                <LucideIcon name="Cloud" size={15} />
               </button>
             </div>
 
             {/* Garis Pemisah */}
-            <div className="h-4 w-[1px] bg-[#14152a]"></div>
+            <div className="h-4 w-[1px] bg-[#1a2d54]"></div>
 
             {/* Tombol Save & Publish */}
             <button
@@ -221,17 +243,17 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                   addNotification('info', 'Nothing active to save.');
                 }
               }}
-              className={`px-3.5 py-1.5 rounded-lg border font-bold text-[11px] uppercase tracking-wider transition-all duration-200 cursor-pointer ${
+              className={`px-3 py-1.5 rounded-lg border font-bold text-[10px] uppercase tracking-wider transition-all duration-150 cursor-pointer ${
                 isDirty
-                  ? 'border-[#ec4899] text-[#e879f9] bg-[#ec4899]/5 shadow-[0_0_10px_rgba(236,72,153,0.1)] hover:bg-[#ec4899]/10'
-                  : 'border-gray-700 hover:border-gray-500 text-gray-300'
+                  ? 'border-[#00A3FF] text-[#00A3FF] bg-[#00A3FF]/5 hover:bg-[#00A3FF]/10'
+                  : 'border-[#1a2d54] hover:border-gray-500 text-[#8E9BB4]'
               }`}
             >
               Save
             </button>
             <button
               onClick={() => setActiveModal('publish')}
-              className="px-3.5 py-1.5 rounded-lg bg-[#ec4899] hover:bg-[#db2777] text-white font-bold text-[11px] uppercase tracking-wider transition-all duration-200 shadow-[0_0_10px_rgba(236,72,153,0.15)] cursor-pointer"
+              className="px-3 py-1.5 rounded-lg bg-[#00A3FF] hover:bg-[#008be6] text-white font-bold text-[10px] uppercase tracking-wider transition-all duration-150 cursor-pointer shadow-sm"
             >
               Publish
             </button>
@@ -240,7 +262,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
             <div className="relative">
               <div
                 onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                className="w-7 h-7 rounded-full bg-gradient-to-tr from-purple-500 to-pink-500 border border-purple-400/25 flex items-center justify-center font-bold text-xs text-white shadow-md shadow-pink-500/10 cursor-pointer select-none"
+                className="w-7 h-7 rounded-full bg-[#122247] border border-[#00A3FF]/20 flex items-center justify-center font-bold text-xs text-[#00A3FF] hover:border-[#00A3FF]/60 cursor-pointer select-none transition-all"
               >
                 U
               </div>
@@ -250,9 +272,12 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         </header>
 
         {/* Area Workspace Utama */}
-        <main className="flex-1 flex flex-col h-full overflow-hidden bg-[#070814]">
+        <main className="flex-1 flex flex-col h-full overflow-hidden bg-[#07122A]">
           {children}
         </main>
+
+        {/* Agnostic Status Bar */}
+        <StatusBar />
       </div>
     </div>
   );

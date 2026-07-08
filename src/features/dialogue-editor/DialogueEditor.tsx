@@ -260,79 +260,84 @@ const DialogueEditorContent: React.FC = () => {
   return (
     <DialogueEditorContext.Provider value={{ validationErrors }}>
       <div className="flex-1 flex flex-col h-full bg-[#070814] select-none">
-      {/* ── Topbar ── */}
-      <div className="h-14 border-b border-[#14152a] px-6 flex items-center justify-between bg-[#0b0c1e] z-10 shrink-0">
+      {/* ── Topbar / Toolbar ── */}
+      <div className="h-14 border-b border-[#1a2d54] px-6 flex items-center justify-between bg-[#0c1833] z-10 shrink-0 font-sans select-none">
         <div>
           <div className="flex items-center gap-2">
-            <LucideIcon name="MessageSquare" className="text-[#e879f9]" size={16} />
-            <h3 className="font-extrabold text-gray-200 text-xs tracking-wider uppercase">Dialogue Trees</h3>
+            <LucideIcon name="MessageSquare" className="text-[#00A3FF]" size={15} />
+            <h3 className="font-extrabold text-[#F3F4F6] text-xs tracking-wider uppercase">Dialogue Trees</h3>
           </div>
-          <p className="text-[10px] text-gray-500 mt-0.5">
-            Kelola node generik dan hubungkan alur cerita game secara terstruktur.
+          <p className="text-[10px] text-[#8E9BB4]/65 mt-0.5 font-mono">
+            Design branching narrative dialogues, events, and conditions.
           </p>
         </div>
 
-        <div className="flex items-center gap-4">
-          {/* Dropdown + Add Node */}
-          <div className="flex items-center gap-1.5 bg-[#070814] border border-[#1a1c36] rounded-lg p-1">
+        {/* Grouped Toolbar Controls */}
+        <div className="flex items-center gap-3 font-mono">
+          {/* GROUP 1: Node Creator */}
+          <div className="flex items-center gap-1.5 bg-[#07122A] border border-[#1a2d54] rounded-lg p-1">
             <select
               value={nodeTypeToAdd}
               onChange={(e) => setNodeTypeToAdd(e.target.value)}
-              className="bg-transparent text-gray-300 text-xs font-bold px-2.5 py-1 focus:outline-none border-none cursor-pointer"
+              className="bg-transparent text-gray-300 text-[10px] font-bold px-2 py-0.5 focus:outline-none border-none cursor-pointer uppercase"
             >
               {allNodeDefs.map((def) => (
-                <option key={def.type} value={def.type} className="bg-[#0b0c1e] text-gray-300">
+                <option key={def.type} value={def.type} className="bg-[#0c1833] text-gray-300 uppercase">
                   {def.title}
                 </option>
               ))}
             </select>
             <button
               onClick={() => handleAddNode(nodeTypeToAdd)}
-              className="flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-bold bg-[#ec4899] hover:bg-[#db2777] text-white transition-all duration-200 cursor-pointer shadow-sm"
+              className="flex items-center gap-1.5 px-3 py-1 rounded-md text-[10px] font-bold bg-[#00A3FF] hover:bg-[#008be6] text-white transition-all duration-150 cursor-pointer shadow-sm uppercase font-mono"
             >
-              <LucideIcon name="Plus" size={12} className="stroke-[3]" />
+              <LucideIcon name="Plus" size={11} className="stroke-[3]" />
               Add Node
             </button>
           </div>
 
-          <div className="h-4 w-[1px] bg-[#1a1c36]" />
+          <div className="h-4 w-[1px] bg-[#1a2d54]" />
 
-          <button
-            onClick={handleOpenExportModal}
-            disabled={nodes.length === 0}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold border transition-all duration-200 cursor-pointer ${
-              nodes.length === 0
-                ? 'opacity-30 border-gray-800 text-gray-500 cursor-not-allowed'
-                : 'border-[#ec4899]/30 text-[#e879f9] bg-[#ec4899]/5 hover:bg-[#ec4899]/10 hover:border-[#ec4899]/50'
-            }`}
-          >
-            <LucideIcon name="Code" size={12} />
-            Export JSON
-          </button>
-
+          {/* GROUP 2: Simulator & Operations */}
           <button
             onClick={() => setActiveModal('preview')}
             disabled={nodes.length === 0}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold border transition-all duration-200 cursor-pointer ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold border transition-all duration-150 cursor-pointer uppercase ${
               nodes.length === 0
-                ? 'opacity-30 border-gray-800 text-gray-500 cursor-not-allowed'
-                : 'bg-emerald-500/10 hover:bg-emerald-500/20 border-emerald-500/30 text-emerald-400'
+                ? 'opacity-30 border-[#1a2d54] text-gray-500 cursor-not-allowed'
+                : 'bg-emerald-500/5 hover:bg-emerald-500/15 border-emerald-500/25 text-emerald-400'
             }`}
           >
-            <LucideIcon name="Play" size={12} className="fill-emerald-400/20" />
+            <LucideIcon name="Play" size={11} className="fill-emerald-400/10" />
             Preview Graph
           </button>
 
           <button
-            onClick={handleClearCanvas}
+            onClick={handleOpenExportModal}
             disabled={nodes.length === 0}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 cursor-pointer ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold border transition-all duration-150 cursor-pointer uppercase ${
               nodes.length === 0
-                ? 'opacity-30 bg-gray-900 border border-gray-800 text-gray-500 cursor-not-allowed'
-                : 'bg-red-500/10 hover:bg-red-500/25 border border-red-500/30 text-red-400'
+                ? 'opacity-30 border-[#1a2d54] text-gray-500 cursor-not-allowed'
+                : 'border-[#00A3FF]/20 text-[#00A3FF] bg-[#00A3FF]/5 hover:bg-[#00A3FF]/10 hover:border-[#00A3FF]/40'
             }`}
           >
-            <LucideIcon name="Trash2" size={12} />
+            <LucideIcon name="Code" size={11} />
+            Export JSON
+          </button>
+
+          <div className="h-4 w-[1px] bg-[#1a2d54]" />
+
+          {/* GROUP 3: Canvas Cleanup */}
+          <button
+            onClick={handleClearCanvas}
+            disabled={nodes.length === 0}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all duration-150 cursor-pointer uppercase ${
+              nodes.length === 0
+                ? 'opacity-30 bg-gray-900 border border-gray-800 text-gray-500 cursor-not-allowed'
+                : 'bg-red-500/5 hover:bg-red-500/15 border-red-500/25 text-red-400'
+            }`}
+          >
+            <LucideIcon name="Trash2" size={11} />
             Clear
           </button>
         </div>
@@ -360,14 +365,14 @@ const DialogueEditorContent: React.FC = () => {
 
           {/* Empty state */}
           {nodes.length === 0 && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none p-4">
-              <div className="w-14 h-14 rounded-full bg-[#ec4899]/5 flex items-center justify-center mb-3 border border-[#ec4899]/10 text-[#e879f9]/50">
-                <LucideIcon name="MessageSquare" size={24} />
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none p-4 select-none">
+              <div className="w-12 h-12 rounded bg-[#00A3FF]/5 flex items-center justify-center mb-3 border border-[#00A3FF]/15 text-[#00A3FF]/50">
+                <LucideIcon name="MessageSquare" size={20} />
               </div>
-              <h4 className="text-gray-300 font-bold text-xs mb-1">Canvas Dialogue Kosong</h4>
-              <p className="text-[10px] text-gray-500 max-w-xs">
-                Pilih tipe node di dropdown lalu klik{' '}
-                <span className="text-[#ec4899] font-bold">"Add Node"</span> untuk mulai.
+              <h4 className="text-gray-300 font-bold text-xs mb-1">Dialogue Graph Canvas Empty</h4>
+              <p className="text-[10px] text-gray-500 max-w-xs leading-normal">
+                Select node type and click{' '}
+                <span className="text-[#00A3FF] font-bold">"Add Node"</span> to begin editing narrative tracks.
               </p>
             </div>
           )}
@@ -403,11 +408,11 @@ const DialogueEditorContent: React.FC = () => {
       {/* ── Modal Export JSON ── */}
       {isExportModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm select-text">
-          <div className="relative w-full max-w-2xl bg-[#0b0c1e] border border-[#1a1c36] rounded-xl shadow-2xl flex flex-col max-h-[85vh]">
-            <div className="px-6 py-4 border-b border-[#1a1c36] flex items-center justify-between">
+          <div className="relative w-full max-w-2xl bg-[#0c1833] border border-[#1a2d54] rounded-lg shadow-2xl flex flex-col max-h-[85vh] overflow-hidden">
+            <div className="px-6 py-4 border-b border-[#1a2d54] flex items-center justify-between bg-[#122247]/20 select-none">
               <div className="flex items-center gap-2">
-                <LucideIcon name="Code" className="text-[#e879f9]" size={16} />
-                <h4 className="font-extrabold text-sm text-gray-200 tracking-wider uppercase">
+                <LucideIcon name="Code" className="text-[#00A3FF]" size={15} />
+                <h4 className="font-extrabold text-xs text-gray-200 tracking-wider uppercase font-mono">
                   Exported Dialogue JSON (Godot Ready)
                 </h4>
               </div>
@@ -415,21 +420,21 @@ const DialogueEditorContent: React.FC = () => {
                 onClick={() => setIsExportModalOpen(false)}
                 className="text-gray-400 hover:text-white transition-colors cursor-pointer"
               >
-                <LucideIcon name="X" size={16} />
+                <LucideIcon name="X" size={15} />
               </button>
             </div>
 
-            <div className="p-6 overflow-y-auto flex-1 bg-[#070814] font-mono text-[11px] text-gray-300 leading-relaxed">
+            <div className="p-6 overflow-y-auto flex-1 bg-[#07122A] font-mono text-[11px] text-gray-300 leading-relaxed">
               <pre className="whitespace-pre-wrap">{exportedJsonText}</pre>
             </div>
 
-            <div className="px-6 py-4 border-t border-[#1a1c36] flex items-center justify-end gap-3 bg-[#0d0e26]">
+            <div className="px-6 py-4 border-t border-[#1a2d54] flex items-center justify-end gap-3 bg-[#122247]/30 select-none">
               <button
                 onClick={handleCopyToClipboard}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all duration-200 cursor-pointer ${
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all duration-200 cursor-pointer font-mono ${
                   copySuccess
                     ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
-                    : 'bg-[#14152a] hover:bg-[#1a1c36] border border-gray-700 text-gray-300'
+                    : 'bg-[#07122A] hover:bg-[#122247]/50 border border-[#1a2d54] text-gray-300'
                 }`}
               >
                 <LucideIcon name={copySuccess ? 'Check' : 'Copy'} size={12} />
@@ -437,14 +442,14 @@ const DialogueEditorContent: React.FC = () => {
               </button>
               <button
                 onClick={handleDownloadJsonFile}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold bg-[#ec4899] hover:bg-[#db2777] text-white transition-all duration-200 shadow-md cursor-pointer"
+                className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold bg-[#00A3FF] hover:bg-[#008be6] text-white transition-all duration-200 shadow-md cursor-pointer font-mono"
               >
                 <LucideIcon name="Download" size={12} />
                 Download JSON File
               </button>
               <button
                 onClick={() => setIsExportModalOpen(false)}
-                className="px-4 py-2 rounded-lg text-xs font-bold hover:bg-gray-800 text-gray-400 hover:text-white transition-all duration-200 cursor-pointer"
+                className="px-4 py-2 rounded-lg text-xs font-bold hover:bg-gray-800 text-gray-400 hover:text-white transition-all duration-200 cursor-pointer font-mono"
               >
                 Close
               </button>

@@ -20,16 +20,15 @@ export const DialogueNode: React.FC<NodeProps<Node<DialogueNodeData>>> = ({ id, 
       outputs={outputs}
       headerColorClass="text-[#D946EF]"
     >
-      {/* Preview ringkas: tidak bisa diedit, arahkan ke Inspector */}
-      <div className="space-y-2">
-        <div className="flex items-baseline gap-1.5">
-          <span className="text-[8px] font-extrabold uppercase tracking-widest text-gray-600 shrink-0">Speaker</span>
-          <span className="text-xs font-semibold text-gray-200 truncate">
-            {data.speaker || <span className="text-gray-600 italic">—</span>}
+      <div className="space-y-1.5 font-sans select-none">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <span className="text-[8px] font-bold uppercase tracking-widest text-[#8E9BB4]/60 font-mono shrink-0">Speaker</span>
+          <span className="text-[10px] font-bold text-[#F3F4F6] truncate">
+            {data.speaker || <span className="text-[#8E9BB4]/40 italic">—</span>}
           </span>
         </div>
-        <p className="text-[10px] text-gray-500 leading-relaxed line-clamp-2">
-          {data.text || <span className="italic">Belum ada teks...</span>}
+        <p className="text-[10px] text-[#8E9BB4] leading-relaxed line-clamp-2">
+          {data.text || <span className="italic text-[#8E9BB4]/45">Belum ada teks...</span>}
         </p>
       </div>
     </BaseNodeWrapper>

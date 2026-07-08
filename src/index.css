@@ -1,4 +1,26 @@
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap');
 @import "tailwindcss";
+
+@theme {
+  --color-brand-deep: #07122A;
+  --color-brand-card: #0c1833;
+  --color-brand-active: #122247;
+  --color-brand-border: #1a2d54;
+  
+  --color-primary-blue: #00A3FF;
+  --color-primary-blue-hover: #008be6;
+  --color-primary-blue-dim: rgba(0, 163, 255, 0.08);
+  
+  --color-text-offwhite: #F3F4F6;
+  --color-text-muted: #8E9BB4;
+  
+  --font-sans: 'Geist', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  
+  --radius-xl: 8px;
+  --radius-lg: 6px;
+  --radius-md: 4px;
+}
 
 /* Base layout config */
 html,
@@ -9,37 +31,50 @@ body,
   width: 100%;
   height: 100%;
   overflow: hidden;
-  background-color: #090d16; /* Sleek dark-slate background */
-  color: #f3f4f6;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background-color: #07122A; /* Deep Navy Background */
+  color: #F3F4F6;
+  font-family: 'Geist', sans-serif;
 }
 
 /* React Flow Visual Customizations */
 .react-flow {
-  --xy-edge-stroke-default: #374151;
-  --xy-edge-stroke-selected: #a855f7;
-  --xy-node-border-default: #1f2937;
-  --xy-node-border-selected: #c084fc;
-  background-color: #0b0f19 !important;
+  --xy-edge-stroke-default: #1a2d54;
+  --xy-edge-stroke-selected: #00A3FF;
+  --xy-node-border-default: #1a2d54;
+  --xy-node-border-selected: #00A3FF;
+  background-color: #07122A !important;
+}
+
+.react-flow__controls-button {
+  background-color: #0c1833 !important;
+  border-bottom: 1px solid #1a2d54 !important;
+  color: #8E9BB4 !important;
+  fill: #8E9BB4 !important;
+}
+
+.react-flow__controls-button:hover {
+  background-color: #122247 !important;
+  color: #00A3FF !important;
+  fill: #00A3FF !important;
 }
 
 /* Scrollbar styling */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #090d16;
+  background: #07122A;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #1f2937;
-  border-radius: 3px;
+  background: #1a2d54;
+  border-radius: 2px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #374151;
+  background: #122247;
 }
 
 /* Animations for premium user experience */
@@ -61,7 +96,7 @@ body,
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: scale(0.97);
+    transform: scale(0.98);
   }
   to {
     opacity: 1;
@@ -70,7 +105,7 @@ body,
 }
 
 .animate-fade-in {
-  animation: fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: fadeIn 0.15s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 @keyframes progressPulse {
@@ -89,4 +124,3 @@ body,
   background-size: 200% 200%;
   animation: progressPulse 1.5s ease infinite;
 }
-

@@ -18,3 +18,4 @@ import './conditionNode.def';
 import './eventNode.def';
 import './variableNode.def';
 import './endNode.def';
+import './startNode.def';

@@ -45,12 +45,16 @@ interface WorkspaceContextProps {
   removeNotification: (id: string) => void;
   
   // Active modals status
-  activeModal: 'settings' | 'publish' | 'profile' | 'about' | null;
-  setActiveModal: (modal: 'settings' | 'publish' | 'profile' | 'about' | null) => void;
+  activeModal: 'settings' | 'publish' | 'profile' | 'about' | 'preview' | null;
+  setActiveModal: (modal: 'settings' | 'publish' | 'profile' | 'about' | 'preview' | null) => void;
   
   // Layout tab status (Explorer, History, Collaborators)
   layoutTab: 'explorer' | 'history' | 'collaborators';
   setLayoutTab: (tab: 'explorer' | 'history' | 'collaborators') => void;
+
+  // Active Editor Validation Errors
+  validationErrors: any[];
+  setValidationErrors: (errors: any[]) => void;
 }
 
 const WorkspaceContext = createContext<WorkspaceContextProps | undefined>(undefined);
@@ -101,7 +105,7 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [isDirty, setIsDirty] = useState(false);
 
   // ── Active Overlay Modals ──
-  const [activeModal, setActiveModal] = useState<'settings' | 'publish' | 'profile' | 'about' | null>(null);
+  const [activeModal, setActiveModal] = useState<'settings' | 'publish' | 'profile' | 'about' | 'preview' | null>(null);
 
   // ── Notification state ──
   const [notifications, setNotifications] = useState<ToastNotification[]>([]);
@@ -272,6 +276,9 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   // Active Layout Tab state
   const [layoutTab, setLayoutTab] = useState<'explorer' | 'history' | 'collaborators'>('explorer');
 
+  // Active validation errors state
+  const [validationErrors, setValidationErrors] = useState<any[]>([]);
+
   return (
     <WorkspaceContext.Provider
       value={{
@@ -298,6 +305,8 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         setActiveModal,
         layoutTab,
         setLayoutTab,
+        validationErrors,
+        setValidationErrors,
       }}
     >
       {children}

@@ -1,7 +1,7 @@
 import { type Node } from '@xyflow/react';
 
 // 1. Jenis Node yang didukung oleh Forge
-export type ForgeNodeType = 'dialogue' | 'condition' | 'event' | 'variable' | 'end';
+export type ForgeNodeType = 'start' | 'dialogue' | 'condition' | 'event' | 'variable' | 'end';
 
 // 2. Definisi Port/Handle Node (Input / Output)
 export interface NodePort {
@@ -11,9 +11,15 @@ export interface NodePort {
 
 // 3. Payload Data khusus untuk masing-masing tipe Node
 
+export interface DialogueChoice {
+  id: string;
+  text: string;
+}
+
 export interface DialogueNodeData {
   speaker: string;
   text: string;
+  choices?: DialogueChoice[];
   [key: string]: unknown;
 }
 

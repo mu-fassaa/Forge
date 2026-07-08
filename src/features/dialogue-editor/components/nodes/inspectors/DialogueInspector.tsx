@@ -10,6 +10,22 @@ export const DialogueInspector: React.FC<InspectorProps<DialogueNodeData>> = ({
   outputs,
   onOutputsChange,
 }) => {
+  const handlePortsChange = (newPorts: any[]) => {
+    // 1. Update outputs visual handle (di React Flow root level)
+    onOutputsChange(newPorts);
+
+    // 2. Sinkronkan dengan payload data.choices (untuk simulator & compile)
+    const isDefault = newPorts.length === 1 && newPorts[0].id === 'out';
+    if (isDefault) {
+      onChange('choices', []);
+    } else {
+      onChange(
+        'choices',
+        newPorts.map((p) => ({ id: p.id, text: p.label }))
+      );
+    }
+  };
+
   return (
     <div className="space-y-5">
       {/* Speaker */}
@@ -46,15 +62,11 @@ export const DialogueInspector: React.FC<InspectorProps<DialogueNodeData>> = ({
       {/* Divider */}
       <div className="border-t border-[#1a1c36]" />
 
-      {/*
-        Output Ports — dikelola oleh Forge Core via PortListEditor.
-        DialogueInspector memberi konteks: port ini = pilihan dialog.
-        Tapi Forge Core tidak peduli — dia hanya tahu NodePort[].
-      */}
+      {/* Output Ports */}
       <div>
         <PortListEditor
           ports={outputs}
-          onChange={onOutputsChange}
+          onChange={handlePortsChange}
           sectionLabel="Dialogue Choices"
           addPlaceholder="Teks pilihan dialog..."
           defaultPort={{ id: 'out', label: 'Out' }}

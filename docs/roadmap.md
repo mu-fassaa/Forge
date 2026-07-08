@@ -16,16 +16,24 @@ This document outlines development roadmap goals structured by Milestones.
 - Global Toast Notifications.
 - Project preferences dialog.
 
-## Milestone 3: File System & Local Assets (Planned)
+## Milestone 3: Dialogue Plugin Complete (Completed)
+- Start & End visual nodes implementation.
+- Enforced single Start node constraint per graph canvas.
+- Dynamic data.choices synchronization inside Dialogue Inspector.
+- Visual validation engine rendering warning alert indicators on nodes.
+- Full interactive Dialogue Simulator preview sandbox.
+- Relational JSON Compiler module.
+
+## Milestone 4: File System & Local Assets (Planned)
 - Physical file management (opening/writing `.forge` extensions).
 - Drag-and-drop file import routines.
 - Asset database crawler mapping game assets (sprites, audios) directly into node selectors.
 
-## Milestone 4: Variable Database & Nodes (Planned)
+## Milestone 5: Variable Database & Nodes (Planned)
 - Central variable manager interface.
 - Dropdown autocomplete selectors for condition/variable nodes based on registered variable keys.
 
-## Milestone 5: Visual Graph Refinements (Future Vision)
+## Milestone 6: Visual Graph Refinements (Future Vision)
 - Graph layout auto-formatting algorithms.
 - Custom edge routing styles.
 - Group nodes / sub-graphs support.

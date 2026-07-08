@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.3.0] - 2026-07-08
+
+### Added
+- **Start Graph Node**: Created a visual `StartNode` canvas component acting as the graph execution entry point.
+- **Single Start Node Enforcement**: Restricted canvas additions to a single Start node per graph, blocking duplicates and throwing warning toast alerts.
+- **Atomic Choice Synchronization**: Linked dynamic choice output ports to internal node payload `data.choices` list.
+- **Dialogue Simulator (Previewer)**: Stateful preview sandbox executing dialogue nodes, picking branch paths, and tracking variables state live.
+- **Visual Validation Engine**: Implemented checking algorithms for unreachable nodes, disconnected choices, missing starts, and infinite loops, rendering alert badges directly on nodes.
+- **Relational JSON Compiler**: Integrated a standalone relational compiler utility. Exposes compiled graphs to exporter targets.
+
 ## [0.2.1] - 2026-07-08
 
 ### Added

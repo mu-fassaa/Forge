@@ -8,6 +8,7 @@ import { WorkspaceProvider } from './context/WorkspaceContext';
 import { NotificationSystem } from './components/workspace/NotificationSystem';
 import { SettingsModal } from './components/workspace/SettingsModal';
 import { PublishModal } from './components/workspace/PublishModal';
+import { PreviewModal } from './components/workspace/PreviewModal';
 
 function AppContent() {
   const [activeTab, setActiveTab] = useState<EditorType>('dashboard');
@@ -35,6 +36,7 @@ function App() {
       <NotificationSystem />
       <SettingsModal />
       <PublishModal />
+      <PreviewModal />
     </WorkspaceProvider>
   );
 }

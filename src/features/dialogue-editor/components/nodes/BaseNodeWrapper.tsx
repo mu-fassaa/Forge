@@ -1,6 +1,8 @@
 import React, { useEffect } from 'react';
 import { Handle, Position, useUpdateNodeInternals } from '@xyflow/react';
 import { type NodePort, type ForgeNodeType } from '../../types/nodes';
+import { useDialogueEditor } from '../../DialogueEditor';
+import { LucideIcon } from '../../../../components/LucideIcon';
 
 interface BaseNodeWrapperProps {
   id: string;
@@ -24,25 +26,42 @@ export const BaseNodeWrapper: React.FC<BaseNodeWrapperProps> = ({
 }) => {
   const updateNodeInternals = useUpdateNodeInternals();
 
+  // Membaca warning validasi dari DialogueEditorContext jika tersedia.
+  // Dibuat aman (fallback kosong) agar tetap reusable di sub-editor lain kelak.
+  let nodeErrors: any[] = [];
+  try {
+    const editorCtx = useDialogueEditor();
+    nodeErrors = editorCtx.validationErrors.filter((err) => err.nodeId === id);
+  } catch (e) {
+    // Graceful exit for non-dialogue editors
+  }
+
+  const hasErrors = nodeErrors.length > 0;
+  const hasErrorSeverity = nodeErrors.some((e) => e.severity === 'error');
+
+  // Hitung border styling dinamis berdasarkan status selected dan validasi
+  const getBorderColorClass = () => {
+    if (selected) return 'border-[#ec4899] shadow-[#ec4899]/10 shadow-lg';
+    if (hasErrors) {
+      return hasErrorSeverity
+        ? 'border-red-500/70 shadow-red-500/5 shadow-md'
+        : 'border-amber-500/70 shadow-amber-500/5 shadow-md';
+    }
+    return 'border-[#1a1c36] hover:border-gray-700';
+  };
+
   // Setiap kali jumlah atau ID output/input handle berubah,
   // beritahu React Flow untuk re-measure posisi handle.
-  // Tanpa ini, handle baru yang ditambahkan secara dinamis
-  // tidak bisa dijadikan sumber/target koneksi.
   useEffect(() => {
     updateNodeInternals(id);
   }, [id, updateNodeInternals, outputs.length, inputs.length,
-      // Juga re-measure jika ID handle berubah (port dihapus/ditambah)
       // eslint-disable-next-line react-hooks/exhaustive-deps
       outputs.map(o => o.id).join(','),
       inputs.map(i => i.id).join(',')]);
 
   return (
     <div
-      className={`rounded-xl border bg-[#0b0c1e] text-gray-200 w-64 shadow-xl transition-all duration-200 select-none ${
-        selected
-          ? 'border-[#ec4899] shadow-[#ec4899]/10 shadow-lg'
-          : 'border-[#1a1c36] hover:border-gray-700'
-      }`}
+      className={`rounded-xl border bg-[#0b0c1e] text-gray-200 w-64 shadow-xl transition-all duration-200 select-none ${getBorderColorClass()}`}
     >
       {/* 1. Render Input Handles (Atas) secara otomatis & merata */}
       <div className="relative w-full h-0">
@@ -69,10 +88,24 @@ export const BaseNodeWrapper: React.FC<BaseNodeWrapperProps> = ({
 
       {/* Header Kartu */}
       <div className="px-4 py-2.5 border-b border-[#1a1c36] bg-[#0d0e26] rounded-t-xl flex items-center justify-between">
-        <span className={`text-[10px] font-extrabold uppercase tracking-widest ${headerColorClass}`}>
-          {title}
-        </span>
-        <span className="text-[9px] font-bold text-gray-500">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <span className={`text-[10px] font-extrabold uppercase tracking-widest truncate ${headerColorClass}`}>
+            {title}
+          </span>
+          {hasErrors && (
+            <div
+              className="shrink-0 flex items-center justify-center p-0.5 rounded cursor-help"
+              title={nodeErrors.map((e: any) => e.message).join('\n')}
+            >
+              <LucideIcon
+                name="AlertTriangle"
+                size={11}
+                className={hasErrorSeverity ? 'text-red-400' : 'text-amber-400'}
+              />
+            </div>
+          )}
+        </div>
+        <span className="text-[9px] font-bold text-gray-500 shrink-0 font-mono">
           ID: {id.split('_').pop()}
         </span>
       </div>

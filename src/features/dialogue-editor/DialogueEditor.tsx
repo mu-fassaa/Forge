@@ -22,9 +22,25 @@ import { type NodePort } from './types/nodes';
 import './components/nodes/definitions';
 
 import { useWorkspace } from '../../context/WorkspaceContext';
+import { validateDialogueGraph, type ValidationError } from './utils/dialogueValidator';
+import { compileDialogueGraph } from './utils/dialogueCompiler';
 
 // Import style CSS dari React Flow
 import '@xyflow/react/dist/style.css';
+
+// Context untuk mendistribusikan data internal editor (seperti warning validasi)
+// ke custom node components tanpa mengotori serialization payload data node.
+export const DialogueEditorContext = React.createContext<{
+  validationErrors: ValidationError[];
+} | null>(null);
+
+export const useDialogueEditor = () => {
+  const ctx = React.useContext(DialogueEditorContext);
+  if (!ctx) {
+    throw new Error('useDialogueEditor must be used inside a DialogueEditorContext.Provider');
+  }
+  return ctx;
+};
 
 const DialogueEditorContent: React.FC = () => {
   const {
@@ -34,6 +50,9 @@ const DialogueEditorContent: React.FC = () => {
     pushStateToStack,
     settings,
     layoutTab,
+    setActiveModal,
+    setValidationErrors,
+    addNotification,
   } = useWorkspace();
 
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
@@ -140,6 +159,14 @@ const DialogueEditorContent: React.FC = () => {
   // ── Tambah node baru dari registry ──────────────────────────
   const handleAddNode = useCallback(
     (type: string) => {
+      if (type === 'start') {
+        const hasStartNode = nodes.some((n) => n.type === 'start');
+        if (hasStartNode) {
+          addNotification('warning', 'Only one Start Node is allowed per graph.');
+          return;
+        }
+      }
+      
       pushStateToStack(nodes, edges);
       const def = nodeRegistry.get(type);
       const nodeId = `${type}_node_${Date.now()}`;
@@ -156,7 +183,7 @@ const DialogueEditorContent: React.FC = () => {
       setNodes((prev) => [...prev, newNode]);
       addHistoryLog(`Added ${def.title}`);
     },
-    [setNodes, nodes, edges, pushStateToStack, addHistoryLog]
+    [setNodes, nodes, edges, pushStateToStack, addHistoryLog, addNotification]
   );
 
   // ── Clear canvas ─────────────────────────────────────────────
@@ -172,49 +199,8 @@ const DialogueEditorContent: React.FC = () => {
 
   // ── Export JSON ──────────────────────────────────────────────
   const generateExportJson = useCallback(() => {
-    const targetNodeIds = new Set(edges.map((e) => e.target));
-    const startNode = nodes.find((n) => !targetNodeIds.has(n.id))?.id ?? nodes[0]?.id ?? null;
-    const nodesMap: Record<string, any> = {};
-
-    nodes.forEach((node) => {
-      // Baca outputs dari root node (bukan dari data)
-      const nodeOutputs: { id: string; label: string }[] = (node as any).outputs ?? [];
-      const outgoing = edges.filter((e) => e.source === node.id);
-
-      const nodeData: Record<string, any> = {
-        id: node.id,
-        type: node.type,
-        data: node.data,
-      };
-
-      if (node.type === 'condition') {
-        // Condition: selalu dua port fixed (true / false)
-        nodeData.next_true = outgoing.find((e) => e.sourceHandle === 'true')?.target ?? null;
-        nodeData.next_false = outgoing.find((e) => e.sourceHandle === 'false')?.target ?? null;
-
-      } else if (
-        nodeOutputs.length > 0 &&
-        !(nodeOutputs.length === 1 && nodeOutputs[0].id === 'out')
-      ) {
-        // Node dengan custom output ports (misalnya Dialogue dengan pilihan):
-        // Ekspor sebagai array choices, setiap port punya next-nya sendiri.
-        // Forge Core tidak tahu ini "choices" — hanya tahu ada N output port.
-        nodeData.choices = nodeOutputs.map((port) => ({
-          port_id: port.id,
-          label: port.label,
-          next: outgoing.find((e) => e.sourceHandle === port.id)?.target ?? null,
-        }));
-
-      } else {
-        // Node dengan single output 'out'
-        const edge = outgoing.find((e) => e.sourceHandle === 'out') ?? outgoing[0];
-        nodeData.next = edge?.target ?? null;
-      }
-
-      nodesMap[node.id] = nodeData;
-    });
-
-    return JSON.stringify({ start_node: startNode, nodes: nodesMap }, null, 2);
+    const compiled = compileDialogueGraph(nodes, edges);
+    return JSON.stringify(compiled, null, 2);
   }, [nodes, edges]);
 
 
@@ -246,8 +232,22 @@ const DialogueEditorContent: React.FC = () => {
     URL.revokeObjectURL(url);
   };
 
+  // ── Run Validation Engine ──────────────────────────────────
+  const validationErrors = useMemo(() => {
+    return validateDialogueGraph(nodes, edges);
+  }, [nodes, edges]);
+
+  // ── Sync Validation Errors to Workspace Context ──────────────
+  useEffect(() => {
+    setValidationErrors(validationErrors);
+    return () => {
+      setValidationErrors([]);
+    };
+  }, [validationErrors, setValidationErrors]);
+
   return (
-    <div className="flex-1 flex flex-col h-full bg-[#070814] select-none">
+    <DialogueEditorContext.Provider value={{ validationErrors }}>
+      <div className="flex-1 flex flex-col h-full bg-[#070814] select-none">
       {/* ── Topbar ── */}
       <div className="h-14 border-b border-[#14152a] px-6 flex items-center justify-between bg-[#0b0c1e] z-10 shrink-0">
         <div>
@@ -296,6 +296,19 @@ const DialogueEditorContent: React.FC = () => {
           >
             <LucideIcon name="Code" size={12} />
             Export JSON
+          </button>
+
+          <button
+            onClick={() => setActiveModal('preview')}
+            disabled={nodes.length === 0}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold border transition-all duration-200 cursor-pointer ${
+              nodes.length === 0
+                ? 'opacity-30 border-gray-800 text-gray-500 cursor-not-allowed'
+                : 'bg-emerald-500/10 hover:bg-emerald-500/20 border-emerald-500/30 text-emerald-400'
+            }`}
+          >
+            <LucideIcon name="Play" size={12} className="fill-emerald-400/20" />
+            Preview Graph
           </button>
 
           <button
@@ -427,7 +440,8 @@ const DialogueEditorContent: React.FC = () => {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </DialogueEditorContext.Provider>
   );
 };
 

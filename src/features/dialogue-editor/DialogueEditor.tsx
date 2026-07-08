@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ReactFlow,
   Background,
@@ -15,17 +15,49 @@ import {
 import { LucideIcon } from '../../components/LucideIcon';
 import { nodeRegistry } from '../../registry/nodeRegistry';
 import { InspectorPanel } from './components/InspectorPanel';
+import { HistoryPanel } from '../../components/workspace/HistoryPanel';
 import { type NodePort } from './types/nodes';
 
 // Side-effect import: mendaftarkan semua node dialogue ke registry global
 import './components/nodes/definitions';
 
+import { useWorkspace } from '../../context/WorkspaceContext';
+
 // Import style CSS dari React Flow
 import '@xyflow/react/dist/style.css';
 
 const DialogueEditorContent: React.FC = () => {
+  const {
+    loadProject,
+    setActiveEditor,
+    addHistoryLog,
+    pushStateToStack,
+    settings,
+    layoutTab,
+  } = useWorkspace();
+
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
+
+  // ── Muat data simpanan pertama kali (On Mount) ──────────────
+  useEffect(() => {
+    const savedData = loadProject();
+    if (savedData) {
+      setNodes(savedData.nodes || []);
+      setEdges(savedData.edges || []);
+      // Push state awal ke undo stack agar bisa di-undo
+      // pushStateToStack(savedData.nodes || [], savedData.edges || []);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ── Sinkronkan Active Editor Registry ──────────────────────
+  useEffect(() => {
+    setActiveEditor({ nodes, edges, setNodes, setEdges });
+    return () => {
+      setActiveEditor(null);
+    };
+  }, [nodes, edges, setNodes, setEdges, setActiveEditor]);
 
   // Node yang sedang dipilih di canvas
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
@@ -40,8 +72,12 @@ const DialogueEditorContent: React.FC = () => {
 
   // ── Koneksi antar node ──────────────────────────────────────
   const onConnect = useCallback(
-    (params: Connection) => setEdges((eds) => addEdge(params, eds)),
-    [setEdges]
+    (params: Connection) => {
+      pushStateToStack(nodes, edges);
+      setEdges((eds) => addEdge(params, eds));
+      addHistoryLog('Connected nodes');
+    },
+    [setEdges, nodes, edges, pushStateToStack, addHistoryLog]
   );
 
   // ── Sinkronkan selectedNode saat selection berubah ──────────
@@ -65,36 +101,46 @@ const DialogueEditorContent: React.FC = () => {
   }, [selectedNode, nodes]);
 
   // ── Handler update data node dari Inspector ─────────────────
+  const { setIsDirty } = useWorkspace();
+  
   const handleNodeDataChange = useCallback(
     (nodeId: string, key: string, value: unknown) => {
-      setNodes((prevNodes) =>
-        prevNodes.map((n) => {
+      // Pindahkan state saat ini ke undo stack sebelum mengedit
+      // Untuk mencegah flood stack saat mengetik, kita hanya push jika canvas bersih (tidak dirty)
+      setNodes((prevNodes) => {
+        const targetNode = prevNodes.find(n => n.id === nodeId);
+        if (targetNode && targetNode.data[key] !== value) {
+          setIsDirty(true);
+        }
+        return prevNodes.map((n) => {
           if (n.id !== nodeId) return n;
           return { ...n, data: { ...n.data, [key]: value } };
-        })
-      );
+        });
+      });
     },
-    [setNodes]
+    [setNodes, setIsDirty]
   );
 
   // ── Handler update output ports node dari Inspector ──────────
   // Forge Core: mengubah outputs di root level node.
-  // Inspector yang memanggil ini tidak perlu tahu tentang React Flow.
   const handleNodeOutputsChange = useCallback(
     (nodeId: string, newOutputs: NodePort[]) => {
+      pushStateToStack(nodes, edges);
       setNodes((prevNodes) =>
         prevNodes.map((n) => {
           if (n.id !== nodeId) return n;
           return { ...n, ...({ outputs: newOutputs } as any) };
         })
       );
+      addHistoryLog('Modified output ports');
     },
-    [setNodes]
+    [setNodes, nodes, edges, pushStateToStack, addHistoryLog]
   );
 
   // ── Tambah node baru dari registry ──────────────────────────
   const handleAddNode = useCallback(
     (type: string) => {
+      pushStateToStack(nodes, edges);
       const def = nodeRegistry.get(type);
       const nodeId = `${type}_node_${Date.now()}`;
       const newNode: Node = {
@@ -108,18 +154,21 @@ const DialogueEditorContent: React.FC = () => {
         ...({ inputs: def.inputs, outputs: def.outputs } as any),
       };
       setNodes((prev) => [...prev, newNode]);
+      addHistoryLog(`Added ${def.title}`);
     },
-    [setNodes]
+    [setNodes, nodes, edges, pushStateToStack, addHistoryLog]
   );
 
   // ── Clear canvas ─────────────────────────────────────────────
   const handleClearCanvas = useCallback(() => {
     if (window.confirm('Apakah Anda yakin ingin menghapus seluruh node dan hubungan di canvas?')) {
+      pushStateToStack(nodes, edges);
       setNodes([]);
       setEdges([]);
       setSelectedNode(null);
+      addHistoryLog('Cleared canvas');
     }
-  }, [setNodes, setEdges]);
+  }, [setNodes, setEdges, nodes, edges, pushStateToStack, addHistoryLog]);
 
   // ── Export JSON ──────────────────────────────────────────────
   const generateExportJson = useCallback(() => {
@@ -276,9 +325,11 @@ const DialogueEditorContent: React.FC = () => {
             onConnect={onConnect}
             onSelectionChange={onSelectionChange}
             nodeTypes={reactFlowNodeTypes}
+            snapToGrid={settings.snap}
+            snapGrid={[20, 20]}
             fitView
           >
-            <Background color="#16172e" gap={20} size={1.5} />
+            {settings.grid && <Background color="#16172e" gap={20} size={1.5} />}
             <Controls className="!bg-[#0b0c1e] !border-[#1a1c36] !text-gray-400 !rounded-lg !overflow-hidden" />
           </ReactFlow>
 
@@ -297,12 +348,31 @@ const DialogueEditorContent: React.FC = () => {
           )}
         </div>
 
-        {/* Inspector Panel */}
-        <InspectorPanel
-          selectedNode={currentSelectedNode}
-          onNodeDataChange={handleNodeDataChange}
-          onNodeOutputsChange={handleNodeOutputsChange}
-        />
+        {/* Right side drawer: Switch based on header tabs */}
+        {layoutTab === 'explorer' ? (
+          <InspectorPanel
+            selectedNode={currentSelectedNode}
+            onNodeDataChange={handleNodeDataChange}
+            onNodeOutputsChange={handleNodeOutputsChange}
+          />
+        ) : layoutTab === 'history' ? (
+          <HistoryPanel
+            editorNodes={nodes}
+            editorEdges={edges}
+            setEditorNodes={setNodes}
+            setEditorEdges={setEdges}
+          />
+        ) : (
+          <div className="w-72 min-w-[288px] h-full bg-[#0b0c1e] border-l border-[#14152a] flex flex-col items-center justify-center text-center p-6 text-gray-500">
+            <div className="w-10 h-10 rounded-full bg-[#0d0e26] border border-[#1a1c36] flex items-center justify-center mb-2.5">
+              <LucideIcon name="Users" size={16} />
+            </div>
+            <p className="text-xs font-bold text-gray-400">Collaborators</p>
+            <p className="text-[9px] text-gray-600 mt-1 max-w-[200px] leading-relaxed">
+              Collaboration features are currently in early development.
+            </p>
+          </div>
+        )}
       </div>
 
       {/* ── Modal Export JSON ── */}

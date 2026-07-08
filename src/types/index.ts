@@ -1,4 +1,4 @@
-export type EditorType = 'dashboard' | 'dialogue' | 'quest' | 'skill' | 'wave' | 'items' | 'enemies';
+export type EditorType = 'dashboard' | 'dialogue' | 'quest' | 'skill' | 'wave' | 'items' | 'enemies' | 'docs';
 
 export interface EditorTool {
   id: EditorType;

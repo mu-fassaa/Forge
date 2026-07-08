@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { EDITOR_TOOLS } from '../utils/tools';
 import { type EditorType } from '../types';
 import { LucideIcon } from '../components/LucideIcon';
+import { useWorkspace } from '../context/WorkspaceContext';
+import { UserMenu } from '../components/workspace/UserMenu';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -14,6 +16,18 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   activeTab,
   setActiveTab,
 }) => {
+  const {
+    metadata,
+    isDirty,
+    saveProject,
+    activeEditor,
+    setActiveModal,
+    layoutTab,
+    setLayoutTab,
+    addNotification,
+  } = useWorkspace();
+
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-[#070814] text-[#f3f4f6]">
       {/* Sidebar - Panel Kiri */}
@@ -26,7 +40,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           </div>
           <div>
             <h1 className="font-extrabold text-sm leading-tight text-white tracking-wide uppercase">Forge</h1>
-            <p className="text-[9px] text-gray-500 tracking-wider font-bold">V0.4.2 EARLY ACCESS</p>
+            <p className="text-[9px] text-gray-500 tracking-wider font-bold">V{metadata.version} EARLY ACCESS</p>
           </div>
         </div>
 
@@ -112,12 +126,19 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
         {/* Footer Sidebar */}
         <div className="p-4 border-t border-[#14152a] bg-[#090a18] text-[10px] text-gray-500 flex flex-col gap-2">
-          <button className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors cursor-pointer text-left">
+          <button
+            onClick={() => setActiveTab('docs')}
+            className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold transition-all duration-200 cursor-pointer text-left ${
+              activeTab === 'docs'
+                ? 'bg-[#ec4899]/10 text-[#e879f9] border border-[#ec4899]/20'
+                : 'text-gray-400 hover:text-white border border-transparent'
+            }`}
+          >
             <LucideIcon name="FileText" size={12} />
             Documentation
           </button>
           <div className="flex items-center justify-between pt-1 border-t border-[#14152a]/50 text-[9px]">
-            <span>v1.0.0-beta</span>
+            <span>v{metadata.version}</span>
             <a href="#" className="hover:text-gray-300">Support</a>
           </div>
         </div>
@@ -128,27 +149,55 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         
         {/* Header Atas */}
         <header className="h-14 border-b border-[#14152a] bg-[#0b0c1e] px-6 flex items-center justify-between select-none">
+          {/* Left Title + Unsaved Changes dot */}
           <div className="flex items-center gap-4">
             <span className="font-bold text-xs text-gray-300 uppercase tracking-widest">
-              Forge Project Manager
+              {metadata.name}
             </span>
+            {isDirty && (
+              <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-pink-500/10 border border-pink-500/20">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#ec4899] animate-pulse"></span>
+                <span className="text-[8px] uppercase tracking-wider font-extrabold text-[#e879f9]">Unsaved Changes</span>
+              </div>
+            )}
           </div>
 
           {/* Tabs Menu Tengah */}
           <div className="flex h-full items-center gap-6">
-            <button className="h-full border-b-2 border-[#ec4899] text-[#e879f9] text-xs font-bold px-1 transition-all cursor-pointer">
+            <button
+              onClick={() => setLayoutTab('explorer')}
+              className={`h-full border-b-2 px-1 transition-all cursor-pointer ${
+                layoutTab === 'explorer'
+                  ? 'border-[#ec4899] text-[#e879f9] text-xs font-bold'
+                  : 'border-transparent text-gray-400 hover:text-gray-200 text-xs font-semibold'
+              }`}
+            >
               Explorer
             </button>
-            <button className="h-full border-b-2 border-transparent text-gray-400 hover:text-gray-200 text-xs font-semibold px-1 transition-all cursor-pointer">
+            <button
+              onClick={() => setLayoutTab('history')}
+              className={`h-full border-b-2 px-1 transition-all cursor-pointer ${
+                layoutTab === 'history'
+                  ? 'border-[#ec4899] text-[#e879f9] text-xs font-bold'
+                  : 'border-transparent text-gray-400 hover:text-gray-200 text-xs font-semibold'
+              }`}
+            >
               History
             </button>
-            <button className="h-full border-b-2 border-transparent text-gray-400 hover:text-gray-200 text-xs font-semibold px-1 transition-all cursor-pointer">
+            <button
+              onClick={() => setLayoutTab('collaborators')}
+              className={`h-full border-b-2 px-1 transition-all cursor-pointer ${
+                layoutTab === 'collaborators'
+                  ? 'border-[#ec4899] text-[#e879f9] text-xs font-bold'
+                  : 'border-transparent text-gray-400 hover:text-gray-200 text-xs font-semibold'
+              }`}
+            >
               Collaborators
             </button>
           </div>
 
           {/* Tombol Aksi Kanan */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 relative">
             {/* Notifikasi & Cloud Status */}
             <div className="flex items-center gap-3 text-gray-400">
               <button className="hover:text-white transition-colors cursor-pointer relative">
@@ -164,16 +213,38 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
             <div className="h-4 w-[1px] bg-[#14152a]"></div>
 
             {/* Tombol Save & Publish */}
-            <button className="px-3.5 py-1.5 rounded-lg border border-gray-700 hover:border-gray-500 text-gray-300 font-bold text-[11px] uppercase tracking-wider transition-all duration-200 cursor-pointer">
+            <button
+              onClick={() => {
+                if (activeEditor) {
+                  saveProject(activeEditor.nodes, activeEditor.edges);
+                } else {
+                  addNotification('info', 'Nothing active to save.');
+                }
+              }}
+              className={`px-3.5 py-1.5 rounded-lg border font-bold text-[11px] uppercase tracking-wider transition-all duration-200 cursor-pointer ${
+                isDirty
+                  ? 'border-[#ec4899] text-[#e879f9] bg-[#ec4899]/5 shadow-[0_0_10px_rgba(236,72,153,0.1)] hover:bg-[#ec4899]/10'
+                  : 'border-gray-700 hover:border-gray-500 text-gray-300'
+              }`}
+            >
               Save
             </button>
-            <button className="px-3.5 py-1.5 rounded-lg bg-[#ec4899] hover:bg-[#db2777] text-white font-bold text-[11px] uppercase tracking-wider transition-all duration-200 shadow-[0_0_10px_rgba(236,72,153,0.15)] cursor-pointer">
+            <button
+              onClick={() => setActiveModal('publish')}
+              className="px-3.5 py-1.5 rounded-lg bg-[#ec4899] hover:bg-[#db2777] text-white font-bold text-[11px] uppercase tracking-wider transition-all duration-200 shadow-[0_0_10px_rgba(236,72,153,0.15)] cursor-pointer"
+            >
               Publish
             </button>
 
             {/* Avatar Pengguna */}
-            <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-purple-500 to-pink-500 border border-purple-400/25 flex items-center justify-center font-bold text-xs text-white shadow-md shadow-pink-500/10 cursor-pointer">
-              U
+            <div className="relative">
+              <div
+                onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                className="w-7 h-7 rounded-full bg-gradient-to-tr from-purple-500 to-pink-500 border border-purple-400/25 flex items-center justify-center font-bold text-xs text-white shadow-md shadow-pink-500/10 cursor-pointer select-none"
+              >
+                U
+              </div>
+              <UserMenu isOpen={isUserMenuOpen} onClose={() => setIsUserMenuOpen(false)} />
             </div>
           </div>
         </header>

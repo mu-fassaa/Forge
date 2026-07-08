@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.2.1] - 2026-07-08
+
+### Added
+- **Core Manifesto (`MANIFESTO.md`)**: Declared five core design principles for Forge: Engine-agnostic, Plugin-first, Human-readable formats, Extensible before optimized, and Consistency over complexity.
+- **Technical Specifications Directory (`docs/`)**: Created visions, architecture specs, node schemas, workspace lifecycle details, project file formatting specs, and design system guidelines.
+
 ## [0.2.0] - 2026-07-08
 
 ### Added

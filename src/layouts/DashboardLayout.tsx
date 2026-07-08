@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { EDITOR_TOOLS } from '../utils/tools';
 import { type EditorType } from '../types';
 import { LucideIcon } from '../components/LucideIcon';
 import { useWorkspace } from '../context/WorkspaceContext';
 import { UserMenu } from '../components/workspace/UserMenu';
 import { StatusBar } from '../components/workspace/StatusBar';
+import { shortcutRegistry } from '../registry/shortcutRegistry';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -29,6 +30,20 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   } = useWorkspace();
 
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+
+  // ── Global Keyboard Shortcut Listener ──────────────────────────────────
+  // Satu listener global. Shortcut didelegasikan ke shortcutRegistry.
+  // DashboardLayout tidak mengetahui isi shortcut — hanya memanggil resolve().
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const resolved = shortcutRegistry.resolve(e);
+      if (!resolved) return;
+      e.preventDefault();
+      resolved.handler?.();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-[#07122A] text-[#F3F4F6] font-sans antialiased">

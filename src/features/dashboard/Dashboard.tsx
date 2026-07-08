@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { type EditorType } from '../../types';
 import { LucideIcon } from '../../components/LucideIcon';
 import { useWorkspace } from '../../context/WorkspaceContext';
+import { recentGraphManager } from '../../services/recentGraphManager';
 
 interface DashboardProps {
   onSelectTool: (tab: EditorType) => void;
@@ -17,7 +18,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSelectTool }) => {
     ? new Date(metadata.lastSavedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     : 'Never';
 
-  // Read saved project node counts for the launcher info display
+  // Read from Recent Graph Manager for accurate last-opened info
+  const recentEntry = useMemo(() => recentGraphManager.getLatest(), []);
+  const lastOpenedTime = recentEntry
+    ? new Date(recentEntry.lastOpenedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    : lastSavedTime;
+
+  // Fallback: read saved project node counts
   const savedData = useMemo(() => {
     try {
       return loadProject('dialogue');
@@ -26,8 +33,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSelectTool }) => {
     }
   }, [loadProject]);
 
-  const nodesCount = savedData?.nodes?.length || 0;
-  const edgesCount = savedData?.edges?.length || 0;
+  const nodesCount = recentEntry?.nodeCount ?? savedData?.nodes?.length ?? 0;
+  const edgesCount = recentEntry?.edgeCount ?? savedData?.edges?.length ?? 0;
 
   // ── VIEW 1: HISTORY TIMELINE VIEW ──
   if (layoutTab === 'history') {
@@ -300,6 +307,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSelectTool }) => {
             <div className="flex items-center gap-1">
               <span>CONNECTIONS:</span>
               <span className="text-[#00A3FF] font-bold">{edgesCount}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span>LAST OPENED:</span>
+              <span className="text-[#00A3FF] font-bold">{lastOpenedTime}</span>
             </div>
             
             {/* Validation Feedback tag */}

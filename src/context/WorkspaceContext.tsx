@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import type {
   ProjectMetadata,
   WorkspaceSettings,
@@ -7,6 +7,8 @@ import type {
   HistoryAction,
   EditorStateSnapshot,
 } from '../types/workspace';
+import { commandRegistry } from '../registry/commandRegistry';
+import { shortcutRegistry } from '../registry/shortcutRegistry';
 
 export interface EditorRegistry {
   id: string; // Tipe unik editor (misal: 'dialogue')
@@ -68,6 +70,11 @@ interface WorkspaceContextProps {
   // Active Editor Validation Errors
   validationErrors: any[];
   setValidationErrors: (errors: any[]) => void;
+
+  // Command Palette
+  isPaletteOpen: boolean;
+  openPalette: () => void;
+  closePalette: () => void;
 }
 
 const WorkspaceContext = createContext<WorkspaceContextProps | undefined>(undefined);
@@ -318,6 +325,91 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   // Active validation errors state
   const [validationErrors, setValidationErrors] = useState<any[]>([]);
 
+  // Command Palette state
+  const [isPaletteOpen, setIsPaletteOpen] = useState(false);
+  const openPalette = useCallback(() => setIsPaletteOpen(true), []);
+  const closePalette = useCallback(() => setIsPaletteOpen(false), []);
+
+  // ── Core Command & Shortcut Registration ──
+  // Menggunakan ref untuk akses handler terkini tanpa stale closure.
+  const setActiveModalRef = useRef(setActiveModal);
+  setActiveModalRef.current = setActiveModal;
+  const addNotificationRef = useRef(addNotification);
+  addNotificationRef.current = addNotification;
+
+  useEffect(() => {
+    // ── Workspace Commands ──
+    commandRegistry.register({
+      id: 'workspace.settings',
+      label: 'Open Settings',
+      description: 'Open workspace settings and preferences',
+      category: 'Workspace',
+      icon: 'Settings',
+      shortcut: 'Ctrl+,',
+      handler: () => setActiveModalRef.current('settings'),
+    });
+    commandRegistry.register({
+      id: 'workspace.publish',
+      label: 'Publish Project',
+      description: 'Open the publish and export workflow',
+      category: 'Workspace',
+      icon: 'Upload',
+      handler: () => setActiveModalRef.current('publish'),
+    });
+    commandRegistry.register({
+      id: 'workspace.preview',
+      label: 'Preview Active Graph',
+      description: 'Open the preview modal for the active editor',
+      category: 'Workspace',
+      icon: 'Play',
+      handler: () => setActiveModalRef.current('preview'),
+    });
+    commandRegistry.register({
+      id: 'workspace.palette',
+      label: 'Open Command Palette',
+      description: 'Search and run any Forge command',
+      category: 'Workspace',
+      icon: 'Command',
+      shortcut: 'Ctrl+K',
+      handler: () => setIsPaletteOpen(true),
+    });
+
+    // ── Shortcut Registration (Core) ──
+    shortcutRegistry.register({
+      key: 'ctrl+,',
+      commandId: 'workspace.settings',
+      handler: () => setActiveModalRef.current('settings'),
+    });
+    shortcutRegistry.register({
+      key: 'ctrl+k',
+      commandId: 'workspace.palette',
+      handler: () => setIsPaletteOpen(true),
+    });
+    shortcutRegistry.register({
+      key: 'ctrl+shift+p',
+      commandId: 'workspace.palette',
+      handler: () => setIsPaletteOpen(true),
+    });
+    shortcutRegistry.register({
+      key: 'escape',
+      handler: () => {
+        setIsPaletteOpen(false);
+        setActiveModalRef.current(null);
+      },
+    });
+
+    return () => {
+      // Unregister saat provider unmount (edge case: HMR)
+      ['workspace.settings', 'workspace.publish', 'workspace.preview', 'workspace.palette'].forEach(
+        (id) => commandRegistry.unregister(id),
+      );
+      ['ctrl+,', 'ctrl+k', 'ctrl+shift+p', 'escape'].forEach(
+        (key) => shortcutRegistry.unregister(key),
+      );
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <WorkspaceContext.Provider
       value={{
@@ -346,6 +438,9 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         setLayoutTab,
         validationErrors,
         setValidationErrors,
+        isPaletteOpen,
+        openPalette,
+        closePalette,
       }}
     >
       {children}

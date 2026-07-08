@@ -9,6 +9,7 @@ import { NotificationSystem } from './components/workspace/NotificationSystem';
 import { SettingsModal } from './components/workspace/SettingsModal';
 import { PublishModal } from './components/workspace/PublishModal';
 import { PreviewModal } from './components/workspace/PreviewModal';
+import { CommandPalette } from './components/workspace/CommandPalette';
 
 function AppContent() {
   const [activeTab, setActiveTab] = useState<EditorType>('dashboard');
@@ -37,6 +38,7 @@ function App() {
       <SettingsModal />
       <PublishModal />
       <PreviewModal />
+      <CommandPalette />
     </WorkspaceProvider>
   );
 }

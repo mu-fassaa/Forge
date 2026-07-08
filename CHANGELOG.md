@@ -7,7 +7,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.5.0] - 2026-07-09
+
+### Added
+- **Command Registry** (`src/registry/commandRegistry.ts`): Singleton class-based registry. Plugins register commands on mount and unregister on unmount. Core is agnostic to plugin implementations.
+- **Shortcut Registry** (`src/registry/shortcutRegistry.ts`): Decoupled from Command Registry. Single global listener in `DashboardLayout` delegates to `shortcutRegistry.resolve()`. Handles input-field focus gracefully.
+- **Command Palette** (`src/components/workspace/CommandPalette.tsx`): VS Code-style overlay triggered via `Ctrl+K` / `Ctrl+Shift+P`. Realtime search, grouped categories, keyboard navigation (↑↓ Enter Esc), shortcut badges, and empty state.
+- **Recent Graph Manager** (`src/services/recentGraphManager.ts`): localStorage service tracking last-opened graphs with node/edge counts. Dashboard hero card now shows accurate last-opened time.
+- **Core Commands Registered**: `workspace.settings`, `workspace.publish`, `workspace.preview`, `workspace.palette`.
+- **Dialogue Commands Registered**: `dialogue.save`, `dialogue.validate`, `dialogue.preview`, `dialogue.export` (registered on plugin mount).
+- **Core Shortcuts**: `Ctrl+K`, `Ctrl+Shift+P` (palette), `Ctrl+,` (settings), `Escape` (close modals/palette).
+- **Dialogue Shortcuts**: `Ctrl+S` (save, registered by Dialogue plugin on mount).
+
+### Changed
+- Dashboard hero card now shows `LAST OPENED` timestamp from Recent Graph Manager.
+- Dashboard Dialogue card shows node/edge counts from Recent Graph Manager (falls back to localStorage if not available).
+
+---
+
+## [0.4.0] - 2026-07-08
+
+### Added
+- **Design System**: Centralized `@theme` tokens in `src/index.css` — Electric Blue (`#00A3FF`), Deep Navy (`#07122A`), Geist + JetBrains Mono fonts.
+- **Status Bar**: Bottom-docked bar showing autosave, grid/snap mode, validation counts, and locale.
+- **Dashboard Workspace Launcher**: Restructured landing page with hero banner, Dialogue spotlight card, and muted module row for unreleased editors.
+- **History Tab View**: Full timeline activity panel on `Explorer → History` tab.
+- **Collaborators Tab View**: Team management panel (alpha placeholder) on `Explorer → Collaborators` tab.
+- **Contextual Header Breadcrumb**: `PROJECT: [NAME] / WORKSPACE: [CONTEXT]` in JetBrains Mono.
+
+### Changed
+- Renamed sidebar button `New Module` → `New Graph`.
+- Dialogue editor toolbar reorganized into semantic groups: Node Creator | Operations | Danger.
+- Removed all pink accent colors (`#ec4899`, `#e879f9`) — migrated to Electric Blue throughout.
+
+---
+
 ## [0.3.0] - 2026-07-08
+
 
 ### Added
 - **Start Graph Node**: Created a visual `StartNode` canvas component acting as the graph execution entry point.

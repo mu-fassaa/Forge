@@ -25,6 +25,9 @@ import './components/nodes/definitions';
 import { useWorkspace } from '../../context/WorkspaceContext';
 import { validateDialogueGraph, type ValidationError } from './utils/dialogueValidator';
 import { compileDialogueGraph } from './utils/dialogueCompiler';
+import { commandRegistry } from '../../registry/commandRegistry';
+import { shortcutRegistry } from '../../registry/shortcutRegistry';
+import { recentGraphManager } from '../../services/recentGraphManager';
 
 // Import style CSS dari React Flow
 import '@xyflow/react/dist/style.css';
@@ -54,6 +57,8 @@ const DialogueEditorContent: React.FC = () => {
     setActiveModal,
     setValidationErrors,
     addNotification,
+    saveProject,
+    metadata,
   } = useWorkspace();
 
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
@@ -89,6 +94,111 @@ const DialogueEditorContent: React.FC = () => {
       setActiveEditor(null);
     };
   }, [nodes, edges, setNodes, setEdges, setActiveEditor]);
+
+  // ── Dialogue Command & Shortcut Registration (Plugin) ────────────────
+  // Dialogue mendaftarkan commandnya sendiri. Core tidak tahu ini.
+  const nodesRef = React.useRef(nodes);
+  nodesRef.current = nodes;
+  const edgesRef = React.useRef(edges);
+  edgesRef.current = edges;
+  const saveProjectRef = React.useRef(saveProject);
+  saveProjectRef.current = saveProject;
+  const setActiveModalRef = React.useRef(setActiveModal);
+  setActiveModalRef.current = setActiveModal;
+  const addNotificationRef = React.useRef(addNotification);
+  addNotificationRef.current = addNotification;
+  const metadataRef = React.useRef(metadata);
+  metadataRef.current = metadata;
+
+  useEffect(() => {
+    commandRegistry.register({
+      id: 'dialogue.save',
+      label: 'Save Dialogue Graph',
+      description: 'Save the current dialogue graph to local storage',
+      category: 'Dialogue',
+      icon: 'Save',
+      shortcut: 'Ctrl+S',
+      handler: () => {
+        saveProjectRef.current(nodesRef.current, edgesRef.current, 'dialogue');
+        recentGraphManager.updateCounts(
+          'dialogue',
+          nodesRef.current.length,
+          edgesRef.current.length,
+        );
+      },
+    });
+    commandRegistry.register({
+      id: 'dialogue.validate',
+      label: 'Validate Dialogue Graph',
+      description: 'Run validation rules on the current dialogue graph',
+      category: 'Dialogue',
+      icon: 'ShieldCheck',
+      handler: () => {
+        const errors = validateDialogueGraph(nodesRef.current, edgesRef.current);
+        if (errors.length === 0) {
+          addNotificationRef.current('success', 'Graph validation passed — no errors found.');
+        } else {
+          addNotificationRef.current('warning', `Validation found ${errors.length} issue(s).`);
+        }
+      },
+    });
+    commandRegistry.register({
+      id: 'dialogue.preview',
+      label: 'Preview Dialogue',
+      description: 'Open the interactive dialogue preview simulator',
+      category: 'Dialogue',
+      icon: 'Play',
+      handler: () => setActiveModalRef.current('preview'),
+    });
+    commandRegistry.register({
+      id: 'dialogue.export',
+      label: 'Export Dialogue JSON',
+      description: 'Compile and export the dialogue graph as JSON',
+      category: 'Dialogue',
+      icon: 'Download',
+      handler: () => {
+        const errors = validateDialogueGraph(nodesRef.current, edgesRef.current);
+        if (errors.length > 0) {
+          addNotificationRef.current('warning', 'Fix validation errors before exporting.');
+          return;
+        }
+        compileDialogueGraph(nodesRef.current, edgesRef.current);
+        addNotificationRef.current('success', 'Dialogue graph compiled successfully.');
+      },
+    });
+
+    // Shortcut: Ctrl+S → Save
+    shortcutRegistry.register({
+      key: 'ctrl+s',
+      commandId: 'dialogue.save',
+      handler: () => {
+        saveProjectRef.current(nodesRef.current, edgesRef.current, 'dialogue');
+        recentGraphManager.updateCounts(
+          'dialogue',
+          nodesRef.current.length,
+          edgesRef.current.length,
+        );
+      },
+    });
+
+    // Catat sesi ini ke Recent Graph Manager
+    recentGraphManager.add({
+      graphId: 'dialogue',
+      projectName: metadataRef.current.name,
+      editorType: 'Dialogue Editor',
+      lastOpenedAt: new Date().toISOString(),
+      nodeCount: nodesRef.current.length,
+      edgeCount: edgesRef.current.length,
+    });
+
+    return () => {
+      ['dialogue.save', 'dialogue.validate', 'dialogue.preview', 'dialogue.export'].forEach(
+        (id) => commandRegistry.unregister(id),
+      );
+      shortcutRegistry.unregister('ctrl+s');
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Node yang sedang dipilih di canvas
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);

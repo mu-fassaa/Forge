@@ -110,6 +110,11 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
             </span>
             <div className="space-y-1">
               {EDITOR_TOOLS.map((tool) => {
+                // Sembunyikan link jika ia adalah plugin dialogue dan sedang dinonaktifkan
+                const isDialogue = tool.id === 'dialogue';
+                const isPluginEnabled = sidebarRegistry.isEnabled(tool.id);
+                if (isDialogue && !isPluginEnabled) return null;
+
                 const isActive = activeTab === tool.id;
                 const isComingSoon = tool.status === 'coming-soon';
 

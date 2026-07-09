@@ -23,7 +23,7 @@ import { useWorkspace } from '../../context/WorkspaceContext';
 import { validateDialogueGraph, type ValidationError } from './utils/dialogueValidator';
 import { compileDialogueGraph } from './utils/dialogueCompiler';
 import { recentGraphManager } from '../../platform/workspace/recentGraphManager';
-import { setDialogueHandlers } from './index';
+import { setDialogueHandlers } from './dialogueBridge';
 
 // Import style CSS dari React Flow
 import '@xyflow/react/dist/style.css';

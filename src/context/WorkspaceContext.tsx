@@ -11,6 +11,7 @@ import { type EditorType } from '../types';
 import { commandRegistry } from '../platform/commands/commandRegistry';
 import { shortcutRegistry } from '../platform/commands/shortcutRegistry';
 import { navigationService } from '../platform/navigation/navigationService';
+import { sidebarRegistry } from '../platform/navigation/sidebarRegistry';
 import { sessionService } from '../platform/workspace/sessionService';
 import { searchService } from '../platform/workspace/searchService';
 import { recentGraphManager } from '../platform/workspace/recentGraphManager';
@@ -353,8 +354,13 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [activeTab, setActiveTabState] = useState<EditorType>('dashboard');
 
   const navigate = useCallback((tab: EditorType) => {
+    const isCoreTab = tab === 'dashboard' || tab === 'docs';
+    if (!isCoreTab && !sidebarRegistry.isEnabled(tab)) {
+      addNotification('warning', `Plugin "${tab}" is disabled.`);
+      return;
+    }
     setActiveTabState(tab);
-  }, []);
+  }, [addNotification]);
 
   // Daftarkan navigate ke NavigationService agar bisa dipanggil dari service layer
   useEffect(() => {

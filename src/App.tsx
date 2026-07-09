@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useReducer } from 'react';
 import { useWorkspace } from './context/WorkspaceContext';
 import { DashboardLayout } from './layouts/DashboardLayout';
 import { Dashboard } from './features/dashboard/Dashboard';
@@ -10,15 +10,21 @@ import { PublishModal } from './components/workspace/PublishModal';
 import { PreviewModal } from './components/workspace/PreviewModal';
 import { CommandPalette } from './components/workspace/CommandPalette';
 import { ContextMenuOverlay } from './components/workspace/ContextMenuOverlay';
-import { editorViewRegistry } from './platform/navigation/editorViewRegistry';
+import { editorViewRegistry, EDITOR_VIEW_CHANGED_EVENT } from './platform/navigation/editorViewRegistry';
 import { PluginLoader } from './plugin/PluginLoader';
 
 function AppContent() {
   const { activeTab } = useWorkspace();
 
-  // Dynamic plugin view dari EditorViewRegistry
-  // Core (dashboard, docs) tetap hardcoded.
-  // Seluruh plugin editors (seperti Dialogue Editor dan Hello Plugin) dirender secara dinamis.
+  // Subscribe ke perubahan editorViewRegistry agar AppContent re-render
+  // saat plugin selesai mendaftarkan editor view mereka (setelah useEffect mount)
+  const [, forceUpdate] = useReducer((x: number) => x + 1, 0);
+  useEffect(() => {
+    const handler = () => forceUpdate();
+    window.addEventListener(EDITOR_VIEW_CHANGED_EVENT, handler);
+    return () => window.removeEventListener(EDITOR_VIEW_CHANGED_EVENT, handler);
+  }, []);
+
   const pluginEntry = editorViewRegistry.get(activeTab);
   const isCoreTab = activeTab === 'dashboard' || activeTab === 'docs';
 

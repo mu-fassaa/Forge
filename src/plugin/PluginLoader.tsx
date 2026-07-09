@@ -14,9 +14,17 @@ import { dialoguePlugin } from '../plugins/dialogue';
 import { helloPlugin } from '../plugins/hello';
 
 // ─────────────────────────────────────────────────────────────
+// Registrasi plugin dilakukan di LEVEL MODUL (di luar React),
+// bukan di dalam useEffect, untuk menghindari race condition
+// akibat StrictMode double-invocation + cleanup.
+// ─────────────────────────────────────────────────────────────
+pluginManager.registerPlugin(dialoguePlugin);
+pluginManager.registerPlugin(helloPlugin);
+
+// ─────────────────────────────────────────────────────────────
 // PluginLoader: bootstrap global mounted di App.tsx.
-// Bertanggung jawab mendaftarkan plugin dan mereaksikan lifecycle
-// enable/disable plugin berdasarkan sidebar toggle.
+// Bertanggung jawab mensinkronkan enable/disable plugin
+// berdasarkan sidebar toggle.
 // ─────────────────────────────────────────────────────────────
 
 export const PluginLoader: React.FC = () => {
@@ -25,6 +33,7 @@ export const PluginLoader: React.FC = () => {
     loadProject,
     addNotification,
     addHistoryLog,
+    activeTab,
   } = useWorkspace();
 
   // Refs untuk mencegah closure stale
@@ -36,38 +45,6 @@ export const PluginLoader: React.FC = () => {
   addNotificationRef.current = addNotification;
   const addHistoryLogRef = useRef(addHistoryLog);
   addHistoryLogRef.current = addHistoryLog;
-
-  // Force update saat toggle plugin diubah
-  const [toggleState, triggerSync] = useReducer((x: number) => x + 1, 0);
-  useEffect(() => {
-    const handler = () => triggerSync();
-    window.addEventListener(SIDEBAR_CHANGED_EVENT, handler);
-    return () => window.removeEventListener(SIDEBAR_CHANGED_EVENT, handler);
-  }, []);
-
-  // 1. Registrasi Awal (Install Time)
-  // Dipanggil sekali saat app mount
-  useEffect(() => {
-    try {
-      pluginManager.registerPlugin(dialoguePlugin);
-      pluginManager.registerPlugin(helloPlugin);
-      
-      // Panggil hook onInstall jika terdefinisi
-      const context = createPluginContext('dialogue');
-      if (dialoguePlugin.onInstall) dialoguePlugin.onInstall(context);
-      if (helloPlugin.onInstall) helloPlugin.onInstall(createPluginContext('hello'));
-    } catch (e: any) {
-      addNotificationRef.current('error', `Plugin registration failed: ${e.message}`);
-    }
-
-    return () => {
-      // HMR/Unmount cleanup: unload plugins cleanly
-      const contextDiag = createPluginContext('dialogue');
-      pluginManager.unloadPlugin('dialogue', contextDiag);
-      pluginManager.unloadPlugin('hello-plugin', createPluginContext('hello'));
-    };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   // Helper untuk membuat PluginContext sandbox per plugin
   const createPluginContext = (pluginId: string): PluginContext => {
@@ -100,26 +77,39 @@ export const PluginLoader: React.FC = () => {
     };
   };
 
-  // 2. React to Enable/Disable Toggle
+  // Force update saat toggle plugin diubah
+  const [toggleState, triggerSync] = useReducer((x: number) => x + 1, 0);
+  useEffect(() => {
+    const handler = () => triggerSync();
+    window.addEventListener(SIDEBAR_CHANGED_EVENT, handler);
+    return () => window.removeEventListener(SIDEBAR_CHANGED_EVENT, handler);
+  }, []);
+
+  // Sinkronisasi Enable/Disable Plugin
+  // Berjalan pada mount (untuk enable semua plugin default) dan setiap kali
+  // sidebar toggle berubah.
   useEffect(() => {
     const plugins = pluginManager.getAllPlugins();
+    console.log('[PluginLoader] Sync plugins, total:', plugins.length);
     for (const plugin of plugins) {
       const id = plugin.manifest.id;
       const shouldBeEnabled = sidebarRegistry.isEnabled(id);
       const isCurrentlyEnabled = pluginManager.isActive(id);
-
+      console.log(`[PluginLoader] Syncing plugin "${id}": shouldBeEnabled=${shouldBeEnabled}, isCurrentlyEnabled=${isCurrentlyEnabled}`);
       const context = createPluginContext(id);
 
       if (shouldBeEnabled && !isCurrentlyEnabled) {
+        console.log(`[PluginLoader] Calling enablePlugin for "${id}"`);
         pluginManager.enablePlugin(id, context);
       } else if (!shouldBeEnabled && isCurrentlyEnabled) {
+        console.log(`[PluginLoader] Calling disablePlugin for "${id}"`);
         pluginManager.disablePlugin(id, context);
       }
     }
 
-    // 3. Update Bootstrap Report Dinamis untuk Debugging Startup
+    // Update Bootstrap Report untuk debugging startup
     const registeredPlugins = pluginManager.getAllPlugins();
-    (window as any).__forgeBootstrapReport = {
+    const activeReport = {
       timestamp: new Date().toISOString(),
       platform: {
         commandRegistry: typeof commandRegistry !== 'undefined',
@@ -140,8 +130,33 @@ export const PluginLoader: React.FC = () => {
       commands: commandRegistry.getAll().length,
       nodes: nodeRegistry.getAll().length,
     };
+    (window as any).__forgeBootstrapReport = activeReport;
+
+    // Cetak LOG TRACE startup sesuai format request
+    const dialogueActive = pluginManager.isActive('dialogue');
+    const helloActive = pluginManager.isActive('hello-plugin');
+    const editorViews = editorViewRegistry.getAll().map(v => v.id);
+    const sidebarEntries = sidebarRegistry.getAll().map(e => e.id);
+
+    console.log(`
+PluginLoader
+${dialogueActive ? '✓ dialogue enabled' : '✗ dialogue disabled'}
+${helloActive ? '✓ hello-plugin enabled' : '✗ hello-plugin disabled'}
+
+Editor Views
+✓ dashboard
+${editorViews.includes('dialogue') ? '✓ dialogue' : '✗ dialogue'}
+${editorViews.includes('hello-plugin') ? '✓ hello-plugin' : '✗ hello-plugin'}
+
+Sidebar
+${sidebarEntries.includes('dialogue') ? '✓ dialogue' : '✗ dialogue'}
+${sidebarEntries.includes('hello-plugin') ? '✓ hello-plugin' : '✗ hello-plugin'}
+
+Navigation
+✓ dialogue -> ${editorViewRegistry.get('dialogue') ? 'DialogueEditor' : 'NOT FOUND'}
+    `);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [toggleState]);
+  }, [toggleState, activeTab]);
 
   return null;
 };

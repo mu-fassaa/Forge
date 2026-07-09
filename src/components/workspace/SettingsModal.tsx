@@ -158,6 +158,29 @@ export const SettingsModal: React.FC = () => {
                   </button>
                 </div>
               </div>
+
+              {/* Reset Workspace Section */}
+              <div className="border-t border-[#1a1c36] pt-4 flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-bold text-red-400">Developer Tools</p>
+                  <p className="text-[10px] text-gray-500">Reset all workspace layouts, recent cache, and plugin states</p>
+                </div>
+                <button
+                  onClick={() => {
+                    if (confirm('Apakah Anda yakin ingin mereset seluruh Workspace Forge? Semua graph dan status plugin akan dikembalikan ke setelan awal.')) {
+                      localStorage.removeItem('forge_sidebar_enabled_v1');
+                      localStorage.removeItem('forge_session');
+                      localStorage.removeItem('forge_workspace');
+                      localStorage.removeItem('forge_recent_graphs_v1');
+                      localStorage.removeItem('forge_plugin_state_version_v1');
+                      window.location.reload();
+                    }
+                  }}
+                  className="px-3 py-1.5 rounded-lg text-[10px] font-bold bg-red-950/40 border border-red-800/30 hover:bg-red-900/40 text-red-400 transition-all duration-200 cursor-pointer"
+                >
+                  Reset Workspace
+                </button>
+              </div>
             </div>
           )}
 

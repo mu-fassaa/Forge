@@ -69,12 +69,14 @@ class ShortcutRegistry {
    */
   resolve(event: KeyboardEvent): ShortcutDefinition | null {
     // Abaikan jika sedang mengetik di input/textarea/select
-    const target = event.target as HTMLElement;
+    const target = event.target as HTMLElement | null;
     const isInputField =
-      target.tagName === 'INPUT' ||
-      target.tagName === 'TEXTAREA' ||
-      target.tagName === 'SELECT' ||
-      target.isContentEditable;
+      target && (
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.tagName === 'SELECT' ||
+        target.isContentEditable
+      );
 
     // Izinkan shortcut Escape dan palette dari input field
     const normalized = normalizeKeyEvent(event);

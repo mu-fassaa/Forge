@@ -3,34 +3,13 @@ import { type PluginContext } from '../../plugin/PluginContext';
 import { DialogueEditor } from './DialogueEditor';
 import { dialogueNodeDefs } from './nodeDefinitions';
 
-// ─────────────────────────────────────────────────────────────
-// Dialogue Plugin Modul Local Context & Handlers
-// ─────────────────────────────────────────────────────────────
-let context: PluginContext | null = null;
+import {
+  activeSaveHandler,
+  activeValidateHandler,
+  activeExportHandler,
+} from './dialogueBridge';
 
-let activeSaveHandler: (() => void) | null = null;
-let activeValidateHandler: (() => void) | null = null;
-let activeExportHandler: (() => void) | null = null;
-
-/**
- * Dipanggil oleh DialogueEditor saat mount untuk menghubungkan
- * state React ke global command handler deklaratif.
- */
-export const setDialogueHandlers = (handlers: {
-  save: () => void;
-  validate: () => void;
-  export: () => void;
-} | null) => {
-  if (!handlers) {
-    activeSaveHandler = null;
-    activeValidateHandler = null;
-    activeExportHandler = null;
-    return;
-  }
-  activeSaveHandler = handlers.save;
-  activeValidateHandler = handlers.validate;
-  activeExportHandler = handlers.export;
-};
+let dialoguePluginContext: PluginContext | null = null;
 
 export const dialoguePlugin = createPlugin({
   manifest: {
@@ -45,11 +24,11 @@ export const dialoguePlugin = createPlugin({
   },
   
   onEnable: (ctx) => {
-    context = ctx;
+    dialoguePluginContext = ctx;
   },
   
   onDisable: () => {
-    context = null;
+    dialoguePluginContext = null;
   },
   
   commands: [
@@ -64,7 +43,7 @@ export const dialoguePlugin = createPlugin({
         if (activeSaveHandler) {
           activeSaveHandler();
         } else {
-          context?.notifications.add('warning', 'Save handler is not ready yet.');
+          dialoguePluginContext?.notifications.add('warning', 'Save handler is not ready yet.');
         }
       },
     },
@@ -106,7 +85,7 @@ export const dialoguePlugin = createPlugin({
       category: 'Navigation',
       icon: 'MessageSquare',
       handler: () => {
-        context?.navigation.navigate('dialogue');
+        dialoguePluginContext?.navigation.navigate('dialogue');
       },
     },
   ],
@@ -169,4 +148,4 @@ export const dialoguePlugin = createPlugin({
     },
   ],
 });
-export { context as dialoguePluginContext };
+export { dialoguePluginContext };

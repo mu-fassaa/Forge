@@ -31,9 +31,47 @@ class SidebarRegistry {
   constructor() {
     try {
       const saved = localStorage.getItem(ENABLED_KEY);
-      this.enabled = saved ? JSON.parse(saved) : {};
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
+          this.enabled = parsed;
+          
+          // Migrasi otomatis untuk v0.6.0: hapus key plugin lama dari localStorage
+          // agar default state enabledByDefault dari manifest dibaca bersih
+          const MIGRATION_VERSION_KEY = 'forge_plugin_state_version_v1';
+          const currentVersion = localStorage.getItem(MIGRATION_VERSION_KEY);
+          if (currentVersion !== '0.6.0') {
+            delete this.enabled['dialogue'];
+            delete this.enabled['hello-plugin'];
+            localStorage.setItem(ENABLED_KEY, JSON.stringify(this.enabled));
+            localStorage.setItem(MIGRATION_VERSION_KEY, '0.6.0');
+            console.log('[SidebarRegistry] Migrated plugin states to v0.6.0');
+          }
+        } else {
+          localStorage.removeItem(ENABLED_KEY);
+          this.enabled = {};
+        }
+      } else {
+        this.enabled = {};
+      }
     } catch {
       this.enabled = {};
+    }
+  }
+
+  /**
+   * Cek apakah plugin memiliki state eksplisit dari user di localStorage.
+   */
+  hasExplicitState(id: string): boolean {
+    return this.enabled[id] !== undefined;
+  }
+
+  /**
+   * Set default state plugin dari manifest jika user belum pernah mengaturnya secara eksplisit.
+   */
+  setDefaultState(id: string, enabled: boolean): void {
+    if (this.enabled[id] === undefined) {
+      this.enabled[id] = enabled;
     }
   }
 

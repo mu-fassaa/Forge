@@ -19,8 +19,15 @@ class PluginManager {
   private plugins = new Map<string, PluginDefinition>();
   private activePlugins = new Set<string>();
 
+
+
   registerPlugin(plugin: PluginDefinition): void {
     const { manifest } = plugin;
+
+    // Set default state plugin jika user belum pernah me-toggle-nya secara eksplisit
+    if (!sidebarRegistry.hasExplicitState(manifest.id)) {
+      sidebarRegistry.setDefaultState(manifest.id, manifest.enabledByDefault ?? true);
+    }
 
     // 1. Validasi Duplicate Plugin ID (HMR-safe)
     if (this.plugins.has(manifest.id)) {

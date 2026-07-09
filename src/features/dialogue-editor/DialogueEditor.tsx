@@ -27,6 +27,7 @@ import { validateDialogueGraph, type ValidationError } from './utils/dialogueVal
 import { compileDialogueGraph } from './utils/dialogueCompiler';
 import { commandRegistry } from '../../registry/commandRegistry';
 import { shortcutRegistry } from '../../registry/shortcutRegistry';
+import { contextMenuRegistry } from '../../registry/contextMenuRegistry';
 import { recentGraphManager } from '../../services/recentGraphManager';
 
 // Import style CSS dari React Flow
@@ -191,11 +192,54 @@ const DialogueEditorContent: React.FC = () => {
       edgeCount: edgesRef.current.length,
     });
 
+    // Context Menu: Dialogue canvas group
+    contextMenuRegistry.registerGroup({
+      id: 'dialogue.canvas',
+      label: 'Canvas',
+      order: 0,
+      items: [
+        {
+          id: 'dialogue.canvas.add-node',
+          label: 'Add Node',
+          icon: 'Plus',
+          handler: () => {
+            // Dispatch event yang bisa ditangkap oleh toolbar handler
+            window.dispatchEvent(new CustomEvent('forge:dialogue:addnode', {
+              detail: { type: nodesRef.current.length === 0 ? 'start' : 'dialogue' },
+            }));
+          },
+        },
+        {
+          id: 'dialogue.canvas.validate',
+          label: 'Validate Graph',
+          icon: 'ShieldCheck',
+          handler: () => {
+            const errors = validateDialogueGraph(nodesRef.current, edgesRef.current);
+            if (errors.length === 0) {
+              addNotificationRef.current('success', 'Graph validation passed — no errors found.');
+            } else {
+              addNotificationRef.current('warning', `Validation found ${errors.length} issue(s).`);
+            }
+          },
+        },
+        {
+          id: 'dialogue.canvas.clear',
+          label: 'Clear Canvas',
+          icon: 'Trash2',
+          separator: true,
+          handler: () => {
+            window.dispatchEvent(new CustomEvent('forge:dialogue:clear'));
+          },
+        },
+      ],
+    });
+
     return () => {
       ['dialogue.save', 'dialogue.validate', 'dialogue.preview', 'dialogue.export'].forEach(
         (id) => commandRegistry.unregister(id),
       );
       shortcutRegistry.unregister('ctrl+s');
+      contextMenuRegistry.unregisterGroup('dialogue.canvas');
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -456,7 +500,15 @@ const DialogueEditorContent: React.FC = () => {
       {/* ── Main area: Canvas + Inspector ── */}
       <div className="flex-1 flex overflow-hidden">
         {/* Canvas */}
-        <div className="flex-1 relative bg-[#070814]">
+        <div
+          className="flex-1 relative bg-[#070814]"
+          onContextMenu={(e) => {
+            e.preventDefault();
+            window.dispatchEvent(new CustomEvent('forge:contextmenu', {
+              detail: { clientX: e.clientX, clientY: e.clientY },
+            }));
+          }}
+        >
           <ReactFlow
             nodes={nodes}
             edges={edges}

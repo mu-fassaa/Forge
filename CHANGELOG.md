@@ -7,7 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.5.1] - 2026-07-09
+
+### Added
+- **Navigation Service** (`src/services/navigationService.ts`): Singleton bridge between platform services and React navigation. Plugin calls `navigationService.navigate()` without knowing React internals.
+- **Session Service** (`src/services/sessionService.ts`): Persists `lastActiveTab` to localStorage. Forge always opens Dashboard on startup; Dashboard "Resume" button reads last session.
+- **Search Service** (`src/services/searchService.ts`): Provider-pattern search aggregator. Core registers `workspace.navigation` and `workspace.recent` providers. Plugins extend via `addProvider()`.
+- **Context Menu Registry** (`src/registry/contextMenuRegistry.ts`): Plugin registers `ContextMenuGroup` on mount, unregisters on unmount. Canvas-only scope (v0.5.1).
+- **Tab Bar** (`src/components/workspace/TabBar.tsx`): Visual strip below header showing active editor as tab. Single active graph (Q1 decision). Home tab always present; editor tab closeable via ×.
+- **Context Menu Overlay** (`src/components/workspace/ContextMenuOverlay.tsx`): Global overlay that listens to `forge:contextmenu` custom event and renders `contextMenuRegistry` groups.
+- **Dialogue Canvas Context Menu**: Right-click on canvas shows Add Node, Validate Graph, Clear Canvas.
+- **Navigation Commands**: `navigation.dashboard`, `navigation.dialogue`, `navigation.docs` registered in CommandRegistry.
+- **Workspace Undo/Redo Commands**: `workspace.undo` (Ctrl+Z) and `workspace.redo` (Ctrl+Y) registered in both CommandRegistry and ShortcutRegistry.
+- **Global Search (Ctrl+P)**: Command Palette extended with dual mode — Commands (Ctrl+K) and Search (Ctrl+P) in one overlay.
+
+### Changed
+- **`activeTab` migrated from `App.tsx` to `WorkspaceContext`**: Eliminates prop drilling. All navigation goes through `navigate()` from context or `navigationService.navigate()`.
+- **`DashboardLayout`**: Removed `activeTab`/`setActiveTab` props — now reads from `useWorkspace()`.
+- **`Dashboard`**: Removed `onSelectTool` prop — calls `navigate()` directly from context. "Resume Last Session" button targets `lastSessionTab`.
+- **Command Palette**: Extended with Search mode tab. Ctrl+K → Commands, Ctrl+P → Search.
+
+---
+
 ## [0.5.0] - 2026-07-09
+
 
 ### Added
 - **Command Registry** (`src/registry/commandRegistry.ts`): Singleton class-based registry. Plugins register commands on mount and unregister on unmount. Core is agnostic to plugin implementations.

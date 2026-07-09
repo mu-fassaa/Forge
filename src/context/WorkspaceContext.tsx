@@ -7,8 +7,13 @@ import type {
   HistoryAction,
   EditorStateSnapshot,
 } from '../types/workspace';
+import { type EditorType } from '../types';
 import { commandRegistry } from '../registry/commandRegistry';
 import { shortcutRegistry } from '../registry/shortcutRegistry';
+import { navigationService } from '../services/navigationService';
+import { sessionService } from '../services/sessionService';
+import { searchService } from '../services/searchService';
+import { recentGraphManager } from '../services/recentGraphManager';
 
 export interface EditorRegistry {
   id: string; // Tipe unik editor (misal: 'dialogue')
@@ -71,10 +76,17 @@ interface WorkspaceContextProps {
   validationErrors: any[];
   setValidationErrors: (errors: any[]) => void;
 
-  // Command Palette
+  // Command Palette & Search
   isPaletteOpen: boolean;
   openPalette: () => void;
   closePalette: () => void;
+  paletteMode: 'command' | 'search';
+  openSearch: () => void;
+
+  // Navigation (Platform Layer)
+  activeTab: EditorType;
+  navigate: (tab: EditorType) => void;
+  lastSessionTab: EditorType | null;
 }
 
 const WorkspaceContext = createContext<WorkspaceContextProps | undefined>(undefined);
@@ -325,10 +337,44 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   // Active validation errors state
   const [validationErrors, setValidationErrors] = useState<any[]>([]);
 
-  // Command Palette state
+  // Command Palette & Search state
   const [isPaletteOpen, setIsPaletteOpen] = useState(false);
-  const openPalette = useCallback(() => setIsPaletteOpen(true), []);
+  const [paletteMode, setPaletteMode] = useState<'command' | 'search'>('command');
+  const openPalette = useCallback(() => { setPaletteMode('command'); setIsPaletteOpen(true); }, []);
+  const openSearch = useCallback(() => { setPaletteMode('search'); setIsPaletteOpen(true); }, []);
   const closePalette = useCallback(() => setIsPaletteOpen(false), []);
+
+  // Navigation state — activeTab dikelola di sini, bukan di App.tsx
+  const [lastSessionTab, setLastSessionTab] = useState<EditorType | null>(() => {
+    const session = sessionService.restore();
+    return session?.lastActiveTab ?? null;
+  });
+  const [activeTab, setActiveTabState] = useState<EditorType>('dashboard');
+
+  const navigate = useCallback((tab: EditorType) => {
+    setActiveTabState(tab);
+  }, []);
+
+  // Daftarkan navigate ke NavigationService agar bisa dipanggil dari service layer
+  useEffect(() => {
+    navigationService.register(navigate);
+  }, [navigate]);
+
+  // Simpan session saat activeTab berubah
+  useEffect(() => {
+    if (activeTab !== 'dashboard') {
+      setLastSessionTab(activeTab);
+      sessionService.save({ lastActiveTab: activeTab });
+    }
+  }, [activeTab]);
+
+  // Undo/Redo refs untuk invokasi via shortcut (arg-free)
+  const activeEditorRef = useRef(activeEditor);
+  activeEditorRef.current = activeEditor;
+  const undoRef = useRef(undo);
+  undoRef.current = undo;
+  const redoRef = useRef(redo);
+  redoRef.current = redo;
 
   // ── Core Command & Shortcut Registration ──
   // Menggunakan ref untuk akses handler terkini tanpa stale closure.
@@ -371,7 +417,66 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       category: 'Workspace',
       icon: 'Command',
       shortcut: 'Ctrl+K',
-      handler: () => setIsPaletteOpen(true),
+      handler: () => { setPaletteMode('command'); setIsPaletteOpen(true); },
+    });
+    commandRegistry.register({
+      id: 'workspace.search',
+      label: 'Search Workspace',
+      description: 'Search graphs, documentation, and workspace items',
+      category: 'Workspace',
+      icon: 'Search',
+      shortcut: 'Ctrl+P',
+      handler: () => { setPaletteMode('search'); setIsPaletteOpen(true); },
+    });
+    commandRegistry.register({
+      id: 'workspace.undo',
+      label: 'Undo',
+      description: 'Undo the last canvas action',
+      category: 'Workspace',
+      icon: 'Undo2',
+      shortcut: 'Ctrl+Z',
+      handler: () => {
+        const ed = activeEditorRef.current;
+        if (ed) undoRef.current(ed.nodes, ed.edges, ed.setNodes, ed.setEdges);
+      },
+    });
+    commandRegistry.register({
+      id: 'workspace.redo',
+      label: 'Redo',
+      description: 'Redo the last undone canvas action',
+      category: 'Workspace',
+      icon: 'Redo2',
+      shortcut: 'Ctrl+Y',
+      handler: () => {
+        const ed = activeEditorRef.current;
+        if (ed) redoRef.current(ed.nodes, ed.edges, ed.setNodes, ed.setEdges);
+      },
+    });
+
+    // ── Navigation Commands ──
+    commandRegistry.register({
+      id: 'navigation.dashboard',
+      label: 'Go to Dashboard',
+      description: 'Open the Forge workspace launcher',
+      category: 'Navigation',
+      icon: 'LayoutDashboard',
+      handler: () => navigationService.navigate('dashboard'),
+    });
+    commandRegistry.register({
+      id: 'navigation.dialogue',
+      label: 'Open Dialogue Editor',
+      description: 'Switch to the Dialogue Tree editor',
+      category: 'Navigation',
+      icon: 'MessageSquare',
+      handler: () => navigationService.navigate('dialogue'),
+    });
+    commandRegistry.register({
+      id: 'navigation.docs',
+      label: 'Open Documentation',
+      description: 'View Forge API and usage documentation',
+      category: 'Navigation',
+      icon: 'FileText',
+      handler: () => navigationService.navigate('docs'),
     });
 
     // ── Shortcut Registration (Core) ──
@@ -383,12 +488,33 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     shortcutRegistry.register({
       key: 'ctrl+k',
       commandId: 'workspace.palette',
-      handler: () => setIsPaletteOpen(true),
+      handler: () => { setPaletteMode('command'); setIsPaletteOpen(true); },
     });
     shortcutRegistry.register({
       key: 'ctrl+shift+p',
       commandId: 'workspace.palette',
-      handler: () => setIsPaletteOpen(true),
+      handler: () => { setPaletteMode('command'); setIsPaletteOpen(true); },
+    });
+    shortcutRegistry.register({
+      key: 'ctrl+p',
+      commandId: 'workspace.search',
+      handler: () => { setPaletteMode('search'); setIsPaletteOpen(true); },
+    });
+    shortcutRegistry.register({
+      key: 'ctrl+z',
+      commandId: 'workspace.undo',
+      handler: () => {
+        const ed = activeEditorRef.current;
+        if (ed) undoRef.current(ed.nodes, ed.edges, ed.setNodes, ed.setEdges);
+      },
+    });
+    shortcutRegistry.register({
+      key: 'ctrl+y',
+      commandId: 'workspace.redo',
+      handler: () => {
+        const ed = activeEditorRef.current;
+        if (ed) redoRef.current(ed.nodes, ed.edges, ed.setNodes, ed.setEdges);
+      },
     });
     shortcutRegistry.register({
       key: 'escape',
@@ -398,14 +524,52 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       },
     });
 
+    // ── Built-in Search Providers ──
+    searchService.addProvider({
+      id: 'workspace.navigation',
+      label: 'Workspace',
+      search: (query: string) => {
+        const items = [
+          { id: 'nav-dashboard', title: 'Dashboard', subtitle: 'Workspace Launcher', category: 'Navigation', icon: 'LayoutDashboard', action: () => navigationService.navigate('dashboard') },
+          { id: 'nav-dialogue', title: 'Dialogue Editor', subtitle: 'Open Dialogue Tree graph editor', category: 'Navigation', icon: 'MessageSquare', action: () => navigationService.navigate('dialogue') },
+          { id: 'nav-docs', title: 'Documentation', subtitle: 'View Forge API and guides', category: 'Navigation', icon: 'FileText', action: () => navigationService.navigate('docs') },
+          { id: 'nav-settings', title: 'Settings', subtitle: 'Open workspace preferences', category: 'Workspace', icon: 'Settings', action: () => setActiveModalRef.current('settings') },
+        ];
+        const q = query.toLowerCase();
+        return q ? items.filter(i => i.title.toLowerCase().includes(q) || i.subtitle.toLowerCase().includes(q)) : items;
+      },
+    });
+    searchService.addProvider({
+      id: 'workspace.recent',
+      label: 'Recent Graphs',
+      search: (query: string) => {
+        const recent = recentGraphManager.getAll();
+        const q = query.toLowerCase();
+        return recent
+          .filter(r => !q || r.projectName.toLowerCase().includes(q) || r.editorType.toLowerCase().includes(q))
+          .map(r => ({
+            id: `recent-${r.graphId}`,
+            title: r.editorType,
+            subtitle: `${r.projectName} · Last opened ${new Date(r.lastOpenedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
+            category: 'Recent',
+            icon: 'Clock',
+            action: () => navigationService.navigate(r.graphId as EditorType),
+          }));
+      },
+    });
+
     return () => {
       // Unregister saat provider unmount (edge case: HMR)
-      ['workspace.settings', 'workspace.publish', 'workspace.preview', 'workspace.palette'].forEach(
-        (id) => commandRegistry.unregister(id),
-      );
-      ['ctrl+,', 'ctrl+k', 'ctrl+shift+p', 'escape'].forEach(
+      [
+        'workspace.settings', 'workspace.publish', 'workspace.preview',
+        'workspace.palette', 'workspace.search', 'workspace.undo', 'workspace.redo',
+        'navigation.dashboard', 'navigation.dialogue', 'navigation.docs',
+      ].forEach((id) => commandRegistry.unregister(id));
+      ['ctrl+,', 'ctrl+k', 'ctrl+shift+p', 'ctrl+p', 'ctrl+z', 'ctrl+y', 'escape'].forEach(
         (key) => shortcutRegistry.unregister(key),
       );
+      searchService.removeProvider('workspace.navigation');
+      searchService.removeProvider('workspace.recent');
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -441,6 +605,11 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         isPaletteOpen,
         openPalette,
         closePalette,
+        paletteMode,
+        openSearch,
+        activeTab,
+        navigate,
+        lastSessionTab,
       }}
     >
       {children}

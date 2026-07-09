@@ -1,23 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { EDITOR_TOOLS } from '../utils/tools';
-import { type EditorType } from '../types';
 import { LucideIcon } from '../components/LucideIcon';
 import { useWorkspace } from '../context/WorkspaceContext';
 import { UserMenu } from '../components/workspace/UserMenu';
 import { StatusBar } from '../components/workspace/StatusBar';
+import { TabBar } from '../components/workspace/TabBar';
 import { shortcutRegistry } from '../registry/shortcutRegistry';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
-  activeTab: EditorType;
-  setActiveTab: (tab: EditorType) => void;
 }
 
-export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
-  children,
-  activeTab,
-  setActiveTab,
-}) => {
+export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   const {
     metadata,
     isDirty,
@@ -27,6 +21,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     layoutTab,
     setLayoutTab,
     addNotification,
+    activeTab,
+    navigate,
   } = useWorkspace();
 
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -66,11 +62,9 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           <button
             onClick={() => {
               if (activeTab === 'dialogue') {
-                // If in Dialogue, trigger graph clearing / reload
                 addNotification('info', 'Please click "Clear" on the toolbar to reset the graph.');
               } else {
-                // Route to editor
-                setActiveTab('dialogue');
+                navigate('dialogue');
               }
             }}
             className="w-full flex items-center justify-center gap-2 py-2 rounded-lg bg-[#00A3FF] hover:bg-[#008be6] text-white font-bold text-xs uppercase tracking-wider transition-all duration-150 cursor-pointer shadow-sm"
@@ -88,7 +82,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
               Main Menu
             </span>
             <button
-              onClick={() => setActiveTab('dashboard')}
+              onClick={() => navigate('dashboard')}
               className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-bold transition-all duration-150 cursor-pointer ${
                 activeTab === 'dashboard'
                   ? 'bg-[#122247] text-[#00A3FF] border border-[#00A3FF]/20'
@@ -113,7 +107,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                 return (
                   <button
                     key={tool.id}
-                    onClick={() => !isComingSoon && setActiveTab(tool.id)}
+                    onClick={() => !isComingSoon && navigate(tool.id)}
                     disabled={isComingSoon}
                     className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-bold transition-all duration-150 border cursor-pointer ${
                       isActive
@@ -155,7 +149,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         {/* Footer Sidebar */}
         <div className="p-4 border-t border-[#1a2d54] bg-[#07122A] text-[10px] text-[#8E9BB4] flex flex-col gap-2">
           <button
-            onClick={() => setActiveTab('docs')}
+            onClick={() => navigate('docs')}
             className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-150 cursor-pointer text-left ${
               activeTab === 'docs'
                 ? 'bg-[#00A3FF]/10 text-[#00A3FF] border border-[#00A3FF]/20'
@@ -285,6 +279,9 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
             </div>
           </div>
         </header>
+
+        {/* Tab Bar — hanya muncul saat ada editor aktif */}
+        <TabBar />
 
         {/* Area Workspace Utama */}
         <main className="flex-1 flex flex-col h-full overflow-hidden bg-[#07122A]">

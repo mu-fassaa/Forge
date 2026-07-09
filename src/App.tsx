@@ -1,30 +1,24 @@
-import { useState } from 'react';
+import { useWorkspace } from './context/WorkspaceContext';
 import { DashboardLayout } from './layouts/DashboardLayout';
 import { Dashboard } from './features/dashboard/Dashboard';
 import { DialogueEditor } from './features/dialogue-editor/DialogueEditor';
 import { DocsPage } from './features/docs/DocsPage';
-import { type EditorType } from './types';
 import { WorkspaceProvider } from './context/WorkspaceContext';
 import { NotificationSystem } from './components/workspace/NotificationSystem';
 import { SettingsModal } from './components/workspace/SettingsModal';
 import { PublishModal } from './components/workspace/PublishModal';
 import { PreviewModal } from './components/workspace/PreviewModal';
 import { CommandPalette } from './components/workspace/CommandPalette';
+import { ContextMenuOverlay } from './components/workspace/ContextMenuOverlay';
 
 function AppContent() {
-  const [activeTab, setActiveTab] = useState<EditorType>('dashboard');
+  const { activeTab } = useWorkspace();
 
   return (
-    <DashboardLayout activeTab={activeTab} setActiveTab={setActiveTab}>
-      {activeTab === 'dashboard' && (
-        <Dashboard onSelectTool={setActiveTab} />
-      )}
-      {activeTab === 'dialogue' && (
-        <DialogueEditor />
-      )}
-      {activeTab === 'docs' && (
-        <DocsPage />
-      )}
+    <DashboardLayout>
+      {activeTab === 'dashboard' && <Dashboard />}
+      {activeTab === 'dialogue' && <DialogueEditor />}
+      {activeTab === 'docs' && <DocsPage />}
     </DashboardLayout>
   );
 }
@@ -39,6 +33,7 @@ function App() {
       <PublishModal />
       <PreviewModal />
       <CommandPalette />
+      <ContextMenuOverlay />
     </WorkspaceProvider>
   );
 }

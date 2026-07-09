@@ -1,15 +1,10 @@
 import React, { useMemo } from 'react';
-import { type EditorType } from '../../types';
 import { LucideIcon } from '../../components/LucideIcon';
 import { useWorkspace } from '../../context/WorkspaceContext';
 import { recentGraphManager } from '../../services/recentGraphManager';
 
-interface DashboardProps {
-  onSelectTool: (tab: EditorType) => void;
-}
-
-export const Dashboard: React.FC<DashboardProps> = ({ onSelectTool }) => {
-  const { metadata, validationErrors, loadProject, layoutTab, historyLogs } = useWorkspace();
+export const Dashboard: React.FC = () => {
+  const { metadata, validationErrors, loadProject, layoutTab, historyLogs, navigate, lastSessionTab } = useWorkspace();
 
   const errorsCount = validationErrors.filter((e) => e.severity === 'error').length;
   const warningsCount = validationErrors.filter((e) => e.severity === 'warning').length;
@@ -250,14 +245,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSelectTool }) => {
           </p>
           <div className="flex items-center gap-3 pt-1">
             <button
-              onClick={() => onSelectTool('dialogue')}
+              onClick={() => navigate(lastSessionTab ?? 'dialogue')}
               className="flex items-center gap-2 py-1.5 px-3.5 rounded bg-[#00A3FF] hover:bg-[#008be6] text-white font-bold text-xs uppercase tracking-wider transition-all duration-150 cursor-pointer shadow-sm font-mono"
             >
               <LucideIcon name="Play" size={11} className="fill-white/10" />
               Resume Last Session
             </button>
             <button
-              onClick={() => onSelectTool('docs')}
+              onClick={() => navigate('docs')}
               className="flex items-center gap-2 py-1.5 px-3.5 rounded border border-[#1a2d54] hover:bg-[#122247]/50 text-[#8E9BB4] hover:text-white font-bold text-xs uppercase tracking-wider transition-all duration-150 cursor-pointer font-mono"
             >
               <LucideIcon name="FileText" size={11} />
@@ -274,7 +269,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSelectTool }) => {
 
       {/* 2. Primary Workspace Module (Full-Width Dialogue Trees Card) */}
       <div
-        onClick={() => onSelectTool('dialogue')}
+        onClick={() => navigate('dialogue')}
         className="rounded-lg border border-[#1a2d54] hover:border-[#00A3FF]/45 bg-[#0c1833]/50 p-5 flex flex-col justify-between min-h-[160px] cursor-pointer group transition-all duration-150 shrink-0"
       >
         <div>

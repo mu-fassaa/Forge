@@ -19,23 +19,21 @@ class PluginManager {
   private plugins = new Map<string, PluginDefinition>();
   private activePlugins = new Set<string>();
 
-  /**
-   * Daftarkan plugin baru ke manager. Melakukan validasi ID unik.
-   */
   registerPlugin(plugin: PluginDefinition): void {
     const { manifest } = plugin;
 
-    // 1. Validasi Duplicate Plugin ID
+    // 1. Validasi Duplicate Plugin ID (HMR-safe)
     if (this.plugins.has(manifest.id)) {
-      throw new Error(`[PluginManager] Duplicate plugin ID detected: "${manifest.id}"`);
+      console.warn(`[PluginManager] Plugin "${manifest.id}" sudah terdaftar. Registrasi ulang untuk development/HMR.`);
+      this.plugins.delete(manifest.id);
     }
 
     // 2. Validasi Duplicate Command ID
     if (plugin.commands) {
       for (const cmd of plugin.commands) {
         if (commandRegistry.get(cmd.id)) {
-          throw new Error(
-            `[PluginManager] Duplicate command ID conflict in plugin "${manifest.id}": command "${cmd.id}" sudah terdaftar.`
+          console.warn(
+            `[PluginManager] Duplicate command ID in plugin "${manifest.id}": command "${cmd.id}" sudah terdaftar. Akan ditimpa.`
           );
         }
       }
@@ -46,8 +44,8 @@ class PluginManager {
       for (const entry of plugin.sidebar) {
         const exists = sidebarRegistry.getAll().some((e) => e.id === entry.id);
         if (exists) {
-          throw new Error(
-            `[PluginManager] Duplicate sidebar ID conflict in plugin "${manifest.id}": sidebar entry "${entry.id}" sudah terdaftar.`
+          console.warn(
+            `[PluginManager] Duplicate sidebar ID in plugin "${manifest.id}": sidebar entry "${entry.id}" sudah terdaftar.`
           );
         }
       }
@@ -57,8 +55,8 @@ class PluginManager {
     if (plugin.nodes) {
       for (const node of plugin.nodes) {
         if (nodeRegistry.has(node.type)) {
-          throw new Error(
-            `[PluginManager] Duplicate node type conflict in plugin "${manifest.id}": node type "${node.type}" sudah terdaftar.`
+          console.warn(
+            `[PluginManager] Duplicate node type in plugin "${manifest.id}": node type "${node.type}" sudah terdaftar.`
           );
         }
       }

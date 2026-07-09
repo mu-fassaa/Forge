@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Plugin Context Sandbox** (`src/plugin/PluginContext.ts`): Wraps core platform APIs (navigation, workspace, notifications, history, search, commands) in a sandboxed object passed to lifecycles.
 - **Plugin Manager** (`src/plugin/PluginManager.ts`): Manages installation validation (verifies duplicate plugin IDs, command IDs, sidebar IDs, and node types) and coordinates lifecycles (`onInstall`, `onEnable`, `onDisable`, `onUnload`).
 - **Dynamic Plugin Loader** (`src/plugin/PluginLoader.tsx`): Bootstrap component always-mounted at core level to coordinate loading dialogue & hello plugins, syncing enable/disable actions seamlessly.
+- **SDK Stabilization Audit**: Implemented HMR-safe warnings for duplicate IDs, added unmount lifecycle cleanups to prevent memory leaks during hot reload, and introduced a robust dynamic `window.__forgeBootstrapReport` debugger.
+- **Fallback View UI**: Integrated an elegant error fallback card in `App.tsx` to handle missing editor views and prevent blank workspaces.
 
 ### Changed
 - **Folder Restructuring**: Reorganized the codebase into `src/platform/` (core services), `src/plugin/` (official SDK APIs), and `src/plugins/` (decoupled plugins).

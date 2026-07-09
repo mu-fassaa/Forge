@@ -6,6 +6,8 @@ import { sidebarRegistry, SIDEBAR_CHANGED_EVENT } from '../platform/navigation/s
 import { navigationService } from '../platform/navigation/navigationService';
 import { commandRegistry } from '../platform/commands/commandRegistry';
 import { searchService } from '../platform/workspace/searchService';
+import { nodeRegistry } from '../platform/workspace/nodeRegistry';
+import { editorViewRegistry } from '../platform/navigation/editorViewRegistry';
 
 // Import concrete plugins
 import { dialoguePlugin } from '../plugins/dialogue';
@@ -36,9 +38,9 @@ export const PluginLoader: React.FC = () => {
   addHistoryLogRef.current = addHistoryLog;
 
   // Force update saat toggle plugin diubah
-  const [, forceUpdate] = useReducer((x: number) => x + 1, 0);
+  const [toggleState, triggerSync] = useReducer((x: number) => x + 1, 0);
   useEffect(() => {
-    const handler = () => forceUpdate();
+    const handler = () => triggerSync();
     window.addEventListener(SIDEBAR_CHANGED_EVENT, handler);
     return () => window.removeEventListener(SIDEBAR_CHANGED_EVENT, handler);
   }, []);
@@ -57,6 +59,14 @@ export const PluginLoader: React.FC = () => {
     } catch (e: any) {
       addNotificationRef.current('error', `Plugin registration failed: ${e.message}`);
     }
+
+    return () => {
+      // HMR/Unmount cleanup: unload plugins cleanly
+      const contextDiag = createPluginContext('dialogue');
+      pluginManager.unloadPlugin('dialogue', contextDiag);
+      pluginManager.unloadPlugin('hello-plugin', createPluginContext('hello'));
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Helper untuk membuat PluginContext sandbox per plugin
@@ -106,7 +116,32 @@ export const PluginLoader: React.FC = () => {
         pluginManager.disablePlugin(id, context);
       }
     }
-  }, [forceUpdate]); // Dipicu setiap kali sidebarRegistry update
+
+    // 3. Update Bootstrap Report Dinamis untuk Debugging Startup
+    const registeredPlugins = pluginManager.getAllPlugins();
+    (window as any).__forgeBootstrapReport = {
+      timestamp: new Date().toISOString(),
+      platform: {
+        commandRegistry: typeof commandRegistry !== 'undefined',
+        sidebarRegistry: typeof sidebarRegistry !== 'undefined',
+        nodeRegistry: typeof nodeRegistry !== 'undefined',
+        editorViewRegistry: typeof editorViewRegistry !== 'undefined',
+        pluginManager: typeof pluginManager !== 'undefined',
+      },
+      plugins: registeredPlugins.reduce((acc, p) => {
+        acc[p.manifest.id] = pluginManager.isActive(p.manifest.id);
+        return acc;
+      }, {} as Record<string, boolean>),
+      views: registeredPlugins.reduce((acc, p) => {
+        acc[p.manifest.id] = p.editorView ? p.editorView.name || 'Component' : null;
+        return acc;
+      }, {} as Record<string, string | null>),
+      sidebar: sidebarRegistry.getAll().map(e => e.id),
+      commands: commandRegistry.getAll().length,
+      nodes: nodeRegistry.getAll().length,
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [toggleState]);
 
   return null;
 };

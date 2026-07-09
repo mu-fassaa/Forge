@@ -23,12 +23,11 @@ Plugin dilarang keras mengimpor registries global secara langsung. Akses ke plat
 ### 4. Lifecycle & Auto-Registration (`PluginManager`)
 `PluginManager` menangani penambahan plugin dan pendaftaran otomatis layanannya ke registries yang bersangkutan ketika plugin diaktifkan (`enablePlugin`). Ketika dinonaktifkan (`disablePlugin`), manager otomatis melakukan unregister untuk semua command, shortcut, sidebar items, node definitions, editor view, context menus, dan docs sections untuk menjamin kebersihan memori (no memory leak).
 
-### 5. Id Duplication Validation
-Untuk mencegah konflik antar plugin di runtime, `PluginManager` memvalidasi keunikan ID sebelum instalasi:
-- Duplicate plugin ID.
-- Duplicate command ID.
-- Duplicate sidebar ID.
-- Duplicate node ID.
+### 5. Id Duplication Validation & Resiliency (HMR-safe)
+Untuk mencegah konflik antar plugin di runtime, `PluginManager` memvalidasi keunikan ID sebelum instalasi. Untuk menjaga kompatibilitas Hot Module Replacement (HMR) dan StrictMode React, `PluginManager` mencatat warning log dan me-refresh data plugin modul alih-alih melempar fatal exception yang merusak boot flow. `PluginLoader.tsx` melakukan `unloadPlugin` secara otomatis saat unmount untuk membersihkan registries.
+
+### 6. Fallback UI & Debugging Report
+Jika `editorViewRegistry` gagal memuat komponen karena kegagalan plugin atau inisialisasi, `App.tsx` merender UI Fallback informatif dengan pesan error yang ramah. Startup status dicatat secara dinamis di window global scope (`window.__forgeBootstrapReport`) untuk visual debugging.
 
 ## Consequences
 
@@ -36,6 +35,8 @@ Untuk mencegah konflik antar plugin di runtime, `PluginManager` memvalidasi keun
 - Core Forge (`App.tsx` dan `DashboardLayout.tsx`) kini bersih dari import plugin secara hardcoded. Seluruh plugin dimuat secara dinamis.
 - Pembersihan memori saat plugin dinonaktifkan terjamin karena unregistrasi dilakukan secara terpusat oleh SDK.
 - SDK menyediakan type safety lengkap yang memandu developer plugin dengan error duplikasi yang jelas.
+- HMR stabil dan aman dari duplicate key exceptions selama development.
+- UI tangguh dan bebas dari blank workspace screen berkat Fallback UI dan Bootstrap Report logger.
 
 **File Ditambahkan**:
 - `src/plugin/PluginManifest.ts`

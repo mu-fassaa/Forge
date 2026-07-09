@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2026-07-09
+
+### Added
+- **Plugin SDK Entry Point** (`src/plugin/createPlugin.ts`): Introduces declarative helper `createPlugin()` to standardize plugin configuration without exposing internal platform mechanics.
+- **Plugin Context Sandbox** (`src/plugin/PluginContext.ts`): Wraps core platform APIs (navigation, workspace, notifications, history, search, commands) in a sandboxed object passed to lifecycles.
+- **Plugin Manager** (`src/plugin/PluginManager.ts`): Manages installation validation (verifies duplicate plugin IDs, command IDs, sidebar IDs, and node types) and coordinates lifecycles (`onInstall`, `onEnable`, `onDisable`, `onUnload`).
+- **Dynamic Plugin Loader** (`src/plugin/PluginLoader.tsx`): Bootstrap component always-mounted at core level to coordinate loading dialogue & hello plugins, syncing enable/disable actions seamlessly.
+
+### Changed
+- **Folder Restructuring**: Reorganized the codebase into `src/platform/` (core services), `src/plugin/` (official SDK APIs), and `src/plugins/` (decoupled plugins).
+- **Dialogue Plugin Migration**: Converted the core Dialogue Editor into a formal SDK plugin (`src/plugins/dialogue/index.ts`). Extracted all node registrations to `src/plugins/dialogue/nodeDefinitions.ts`. Removed direct singleton registry calls from `DialogueEditor.tsx`.
+- **Hello Plugin Migration**: Relocated Hello Plugin to `src/plugins/hello/` and migrated to SDK standard layout. Removed the redundant local loader file.
+- **`App.tsx` Core Decoupling**: Completely removed hardcoded imports and page rendering configurations for Dialogue Editor. Halaman editor didelegasikan sepenuhnya secara dinamis melalui `editorViewRegistry` yang diisi oleh SDK.
+
+---
+
 ## [0.5.5] - 2026-07-09
 
 ### Added

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { contextMenuRegistry } from '../../registry/contextMenuRegistry';
+import { contextMenuRegistry } from '../../platform/commands/contextMenuRegistry';
 import { LucideIcon } from '../LucideIcon';
 
 // ─────────────────────────────────────────────────────────────

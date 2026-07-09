@@ -5,8 +5,8 @@ import { useWorkspace } from '../context/WorkspaceContext';
 import { UserMenu } from '../components/workspace/UserMenu';
 import { StatusBar } from '../components/workspace/StatusBar';
 import { TabBar } from '../components/workspace/TabBar';
-import { shortcutRegistry } from '../registry/shortcutRegistry';
-import { sidebarRegistry, SIDEBAR_CHANGED_EVENT } from '../registry/sidebarRegistry';
+import { shortcutRegistry } from '../platform/commands/shortcutRegistry';
+import { sidebarRegistry, SIDEBAR_CHANGED_EVENT } from '../platform/navigation/sidebarRegistry';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;

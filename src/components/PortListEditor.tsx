@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import { type NodePort } from '../features/dialogue-editor/types/nodes';
+import { type NodePort } from '../plugins/dialogue/types/nodes';
 import { LucideIcon } from './LucideIcon';
 
 interface PortListEditorProps {

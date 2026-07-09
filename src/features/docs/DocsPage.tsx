@@ -1,6 +1,6 @@
 import React, { useEffect, useReducer } from 'react';
 import { LucideIcon } from '../../components/LucideIcon';
-import { docsRegistry } from '../../registry/docsRegistry';
+import { docsRegistry } from '../../platform/navigation/docsRegistry';
 
 interface ShortcutItem {
   keys: string[];

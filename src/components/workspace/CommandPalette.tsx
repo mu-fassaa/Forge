@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useWorkspace } from '../../context/WorkspaceContext';
-import { commandRegistry } from '../../registry/commandRegistry';
-import { searchService, type SearchResult } from '../../services/searchService';
+import { commandRegistry } from '../../platform/commands/commandRegistry';
+import { searchService, type SearchResult } from '../../platform/workspace/searchService';
 import { LucideIcon } from '../LucideIcon';
 import type { CommandDefinition } from '../../types/workspace';
 

@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { LucideIcon } from '../../components/LucideIcon';
 import { useWorkspace } from '../../context/WorkspaceContext';
-import { recentGraphManager } from '../../services/recentGraphManager';
+import { recentGraphManager } from '../../platform/workspace/recentGraphManager';
 
 export const Dashboard: React.FC = () => {
   const { metadata, validationErrors, loadProject, layoutTab, historyLogs, navigate, lastSessionTab } = useWorkspace();

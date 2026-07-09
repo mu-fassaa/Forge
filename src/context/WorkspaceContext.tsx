@@ -8,12 +8,13 @@ import type {
   EditorStateSnapshot,
 } from '../types/workspace';
 import { type EditorType } from '../types';
-import { commandRegistry } from '../registry/commandRegistry';
-import { shortcutRegistry } from '../registry/shortcutRegistry';
-import { navigationService } from '../services/navigationService';
-import { sessionService } from '../services/sessionService';
-import { searchService } from '../services/searchService';
-import { recentGraphManager } from '../services/recentGraphManager';
+import { commandRegistry } from '../platform/commands/commandRegistry';
+import { shortcutRegistry } from '../platform/commands/shortcutRegistry';
+import { navigationService } from '../platform/navigation/navigationService';
+import { sessionService } from '../platform/workspace/sessionService';
+import { searchService } from '../platform/workspace/searchService';
+import { recentGraphManager } from '../platform/workspace/recentGraphManager';
+
 
 export interface EditorRegistry {
   id: string; // Tipe unik editor (misal: 'dialogue')

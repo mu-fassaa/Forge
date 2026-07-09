@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useReducer } from 'react';
 import { EDITOR_TOOLS } from '../utils/tools';
 import { LucideIcon } from '../components/LucideIcon';
 import { useWorkspace } from '../context/WorkspaceContext';
@@ -6,6 +6,7 @@ import { UserMenu } from '../components/workspace/UserMenu';
 import { StatusBar } from '../components/workspace/StatusBar';
 import { TabBar } from '../components/workspace/TabBar';
 import { shortcutRegistry } from '../registry/shortcutRegistry';
+import { sidebarRegistry, SIDEBAR_CHANGED_EVENT } from '../registry/sidebarRegistry';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -26,6 +27,14 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
   } = useWorkspace();
 
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+
+  // Re-render saat plugin registry berubah (plugin mount/unmount/toggle)
+  const [, forceUpdate] = useReducer((x: number) => x + 1, 0);
+  useEffect(() => {
+    const handler = () => forceUpdate();
+    window.addEventListener(SIDEBAR_CHANGED_EVENT, handler);
+    return () => window.removeEventListener(SIDEBAR_CHANGED_EVENT, handler);
+  }, []);
 
   // ── Global Keyboard Shortcut Listener ──────────────────────────────────
   // Satu listener global. Shortcut didelegasikan ke shortcutRegistry.
@@ -131,6 +140,56 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
               })}
             </div>
           </div>
+
+          {/* Installed Plugins — dari sidebarRegistry */}
+          {sidebarRegistry.hasEntries() && (
+            <div>
+              <span className="block px-3 mb-1.5 text-[9px] uppercase font-extrabold tracking-widest text-[#3d5275] font-mono">
+                Installed Plugins
+              </span>
+              <div className="space-y-0.5">
+                {sidebarRegistry.getAll().map((entry) => {
+                  const enabled = sidebarRegistry.isEnabled(entry.id);
+                  const isActive = activeTab === entry.id;
+                  return (
+                    <div key={entry.id} className="flex items-center gap-1 group/plugin">
+                      <button
+                        onClick={() => enabled && navigate(entry.id)}
+                        disabled={!enabled}
+                        className={`flex-1 flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-bold transition-all duration-150 border ${
+                          isActive && enabled
+                            ? 'bg-[#00A3FF]/10 text-[#00A3FF] border-[#00A3FF]/25 cursor-pointer'
+                            : !enabled
+                            ? 'opacity-30 text-gray-500 border-transparent cursor-not-allowed'
+                            : 'text-[#8E9BB4] hover:bg-[#122247]/40 hover:text-white border-transparent cursor-pointer'
+                        }`}
+                      >
+                        <LucideIcon name={entry.icon} size={15} />
+                        <span>{entry.label}</span>
+                      </button>
+                      {/* Enable/disable toggle */}
+                      <button
+                        onClick={() => {
+                          const next = !enabled;
+                          sidebarRegistry.setEnabled(entry.id, next);
+                          // Jika sedang di tab ini dan dinonaktifkan, kembali ke home
+                          if (!next && isActive) navigate('dashboard');
+                        }}
+                        className="opacity-0 group-hover/plugin:opacity-100 shrink-0 p-1 rounded text-[#3d5275] hover:text-[#8E9BB4] transition-all cursor-pointer"
+                        title={enabled ? 'Disable plugin' : 'Enable plugin'}
+                      >
+                        <LucideIcon
+                          name={enabled ? 'ToggleRight' : 'ToggleLeft'}
+                          size={16}
+                          className={enabled ? 'text-[#00A3FF]' : 'text-[#3d5275]'}
+                        />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Project Settings */}
           <div>

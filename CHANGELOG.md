@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.5] - 2026-07-09
+
+### Added
+- **Sidebar Registry** (`src/registry/sidebarRegistry.ts`): Registry for plugins to register their sidebar entry points dynamically under section "Installed Plugins", with localized enable/disable toggles persisted in `localStorage`.
+- **Editor View Registry** (`src/registry/editorViewRegistry.ts`): Registry for plugin-contributed editor React components, allowing dynamic tab rendering without hardcoded core page imports.
+- **Docs Registry** (`src/registry/docsRegistry.ts`): Registry for dynamic documentation sections contributed by plugins, showing in `DocsPage`.
+- **Hello Plugin Proof** (`src/features/hello-plugin/`): A lightweight, modular plugin demonstrating 6 platform capabilities:
+  - Dynamic sidebar item registration with enable/disable functionality.
+  - Active editor canvas component (`HelloPlugin.tsx`) showing verified status indicator cards.
+  - Interactive context-sensitive shortcut (`Ctrl+H`) triggering custom actions.
+  - Right-click canvas context menu (`hello.canvas`) registry integration.
+  - Custom ReactFlow Node (`hello.greeting`) integration that can be instantiated dynamically in Dialogue Editor.
+  - Fully integrated documentation page (`HelloPluginDocs.tsx`).
+
+### Changed
+- **`EditorType` Relakasi**: Diubah dari static union menjadi string untuk mendukung arbitrary plugin tabs.
+- **`App.tsx`**: Di-refactor untuk merender plugin editor secara dinamis dari `editorViewRegistry`.
+- **`DashboardLayout.tsx`**: Ditambahkan section "Installed Plugins" yang merefleksikan entri dari `sidebarRegistry`.
+- **`DocsPage.tsx`**: Di-refactor untuk merender plugin docs sections secara dinamis.
+
 ---
 
 ## [0.5.1] - 2026-07-09

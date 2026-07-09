@@ -1,4 +1,7 @@
-export type EditorType = 'dashboard' | 'dialogue' | 'quest' | 'skill' | 'wave' | 'items' | 'enemies' | 'docs';
+// Known core editor IDs (documented for reference):
+// 'dashboard' | 'dialogue' | 'quest' | 'skill' | 'wave' | 'items' | 'enemies' | 'docs'
+// Plugin editors extend this with any string ID via EditorViewRegistry.
+export type EditorType = string;
 
 export interface EditorTool {
   id: EditorType;

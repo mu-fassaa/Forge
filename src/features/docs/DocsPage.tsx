@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect, useReducer } from 'react';
 import { LucideIcon } from '../../components/LucideIcon';
+import { docsRegistry } from '../../registry/docsRegistry';
 
 interface ShortcutItem {
   keys: string[];
@@ -15,6 +16,15 @@ const SHORTCUTS: ShortcutItem[] = [
 ];
 
 export const DocsPage: React.FC = () => {
+  // Re-render saat plugin docs terdaftar/dihapus
+  const [, forceUpdate] = useReducer((x: number) => x + 1, 0);
+  useEffect(() => {
+    const handler = () => forceUpdate();
+    window.addEventListener('forge:sidebar-changed', handler);
+    return () => window.removeEventListener('forge:sidebar-changed', handler);
+  }, []);
+
+  const pluginSections = docsRegistry.getAll();
   return (
     <div className="flex-1 flex flex-col h-full bg-[#070814] overflow-y-auto select-text">
       {/* Top Header */}
@@ -130,6 +140,41 @@ func display_dialogue():
             </pre>
           </div>
         </div>
+        {/* Plugin Documentation Sections */}
+        {pluginSections.length > 0 && (
+          <div className="space-y-8">
+            <div className="flex items-center gap-3">
+              <div className="h-px flex-1 bg-[#1a2d54]" />
+              <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-[#3d5275] font-mono">
+                <LucideIcon name="Puzzle" size={12} />
+                Installed Plugins
+              </div>
+              <div className="h-px flex-1 bg-[#1a2d54]" />
+            </div>
+            {pluginSections.map((section) => {
+              const ContentComponent = section.content;
+              return (
+                <div key={section.id} className="space-y-4">
+                  <div className="flex items-center gap-2.5">
+                    {section.icon && (
+                      <div className="w-7 h-7 rounded-md flex items-center justify-center"
+                        style={{ background: 'rgba(0,163,255,0.08)', border: '1px solid rgba(0,163,255,0.2)' }}>
+                        <LucideIcon name={section.icon} size={13} className="text-[#00A3FF]" />
+                      </div>
+                    )}
+                    <div>
+                      <h2 className="text-sm font-bold text-white">{section.title}</h2>
+                      {section.pluginName && (
+                        <span className="text-[10px] font-mono text-[#3d5275]">Plugin: {section.pluginName}</span>
+                      )}
+                    </div>
+                  </div>
+                  <ContentComponent />
+                </div>
+              );
+            })}
+          </div>
+        )}
 
       </div>
     </div>

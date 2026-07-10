@@ -21,4 +21,6 @@ export interface PluginManifest {
   enabledByDefault?: boolean;
   /** Daftar ID plugin lain yang menjadi dependensi */
   dependencies?: string[];
+  /** Apakah plugin merupakan bawaan/official editor utama */
+  builtin?: boolean;
 }

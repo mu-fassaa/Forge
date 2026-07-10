@@ -18,26 +18,55 @@ export const StatusBar: React.FC = () => {
 
       {/* Tengah: Validasi Graph Terkini */}
       <div className="flex items-center gap-4">
-        {errorsCount > 0 ? (
-          <div className="flex items-center gap-1 text-red-400 font-bold">
-            <LucideIcon name="AlertOctagon" size={11} />
-            <span>{errorsCount} ERRORS</span>
-          </div>
-        ) : null}
+        {(() => {
+          if (!activeEditor) return null;
 
-        {warningsCount > 0 ? (
-          <div className="flex items-center gap-1 text-amber-400 font-bold">
-            <LucideIcon name="AlertTriangle" size={11} />
-            <span>{warningsCount} WARNINGS</span>
-          </div>
-        ) : null}
+          const isEmpty = activeEditor.nodes && activeEditor.nodes.length === 0;
+          const hasNoStart = validationErrors.some((e) => e.type === 'no-start');
 
-        {errorsCount === 0 && warningsCount === 0 ? (
-          <div className="flex items-center gap-1 text-emerald-400 font-bold">
-            <LucideIcon name="CheckCircle" size={11} />
-            <span>GRAPH VALIDATED</span>
-          </div>
-        ) : null}
+          if (isEmpty) {
+            return (
+              <div className="flex items-center gap-1 text-[#8E9BB4]/80 font-bold">
+                <LucideIcon name="CircleDot" size={11} className="text-[#00A3FF]" />
+                <span>READY TO START</span>
+              </div>
+            );
+          }
+
+          if (errorsCount > 0) {
+            return (
+              <div className="flex items-center gap-1 text-red-400 font-bold">
+                <LucideIcon name="AlertOctagon" size={11} />
+                <span>VALIDATION ERROR ({errorsCount} {errorsCount === 1 ? 'ERROR' : 'ERRORS'})</span>
+              </div>
+            );
+          }
+
+          if (hasNoStart) {
+            return (
+              <div className="flex items-center gap-1 text-amber-400 font-bold">
+                <LucideIcon name="AlertTriangle" size={11} />
+                <span>MISSING START NODE</span>
+              </div>
+            );
+          }
+
+          if (warningsCount > 0) {
+            return (
+              <div className="flex items-center gap-1 text-amber-400 font-bold">
+                <LucideIcon name="AlertTriangle" size={11} />
+                <span>VALIDATION WARNING ({warningsCount} {warningsCount === 1 ? 'WARNING' : 'WARNINGS'})</span>
+              </div>
+            );
+          }
+
+          return (
+            <div className="flex items-center gap-1 text-emerald-400 font-bold">
+              <LucideIcon name="CheckCircle" size={11} />
+              <span>GRAPH VALIDATED</span>
+            </div>
+          );
+        })()}
       </div>
 
       {/* Kanan: Preferensi Workspace */}

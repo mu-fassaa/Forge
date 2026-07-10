@@ -114,7 +114,10 @@ class PluginManager {
     // 4. Auto Registration: Sidebar Entries
     if (plugin.sidebar) {
       for (const sb of plugin.sidebar) {
-        sidebarRegistry.register(sb);
+        sidebarRegistry.register({
+          ...sb,
+          builtin: manifest.builtin,
+        });
       }
     }
 

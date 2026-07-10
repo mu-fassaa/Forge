@@ -22,6 +22,8 @@ export interface SidebarEntry {
   section: 'plugins';
   /** Urutan tampil dalam section */
   order?: number;
+  /** Apakah entry ini dari plugin bawaan */
+  builtin?: boolean;
 }
 
 class SidebarRegistry {

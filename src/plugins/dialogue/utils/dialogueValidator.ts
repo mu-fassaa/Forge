@@ -24,13 +24,15 @@ export const validateDialogueGraph = (nodes: any[], edges: any[]): ValidationErr
   // 1. Validasi Keberadaan Start Node
   const startNodes = nodes.filter((n) => n.type === 'start');
   if (startNodes.length === 0) {
-    // Tambahkan error global (nodeId kosong atau dikaitkan ke editor)
-    errors.push({
-      nodeId: 'global',
-      type: 'no-start',
-      message: 'Workspace graph has no Start Node.',
-      severity: 'error',
-    });
+    if (nodes.length > 0) {
+      // Tambahkan warning global (nodeId kosong atau dikaitkan ke editor)
+      errors.push({
+        nodeId: 'global',
+        type: 'no-start',
+        message: 'Workspace graph has no Start Node.',
+        severity: 'warning',
+      });
+    }
   } else if (startNodes.length > 1) {
     startNodes.forEach((n) => {
       errors.push({

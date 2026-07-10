@@ -147,13 +147,13 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
           </div>
 
           {/* Installed Plugins — dari sidebarRegistry */}
-          {sidebarRegistry.hasEntries() && (
+          {sidebarRegistry.getAll().some(e => !e.builtin) && (
             <div>
               <span className="block px-3 mb-1.5 text-[9px] uppercase font-extrabold tracking-widest text-[#3d5275] font-mono">
                 Installed Plugins
               </span>
               <div className="space-y-0.5">
-                {sidebarRegistry.getAll().map((entry) => {
+                {sidebarRegistry.getAll().filter(e => !e.builtin).map((entry) => {
                   const enabled = sidebarRegistry.isEnabled(entry.id);
                   const isActive = activeTab === entry.id;
                   return (

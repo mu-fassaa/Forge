@@ -21,6 +21,7 @@ export const dialoguePlugin = createPlugin({
     icon: 'MessageSquare',
     category: 'Editors',
     enabledByDefault: true,
+    builtin: true,
   },
   
   onEnable: (ctx) => {

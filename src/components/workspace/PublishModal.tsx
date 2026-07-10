@@ -12,7 +12,8 @@ export const PublishModal: React.FC = () => {
   const [progress, setProgress] = useState(0);
 
   const isOpen = activeModal === 'publish';
-  const hasErrors = validationErrors.some((err: any) => err.severity === 'error');
+  const hasErrors = validationErrors.some((err: any) => err.severity === 'error') ||
+    validationErrors.some((err: any) => err.type === 'no-start');
 
   // Run the compilation pipeline automatically when the modal is opened
   useEffect(() => {
